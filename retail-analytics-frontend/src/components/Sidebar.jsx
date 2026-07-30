@@ -8,6 +8,7 @@ import {
   FaCog,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { NavLink } from "react-router-dom";
 
 function Sidebar() {
   return (
@@ -19,61 +20,103 @@ function Sidebar() {
 
       <nav className="mt-6">
 
-        <Link
-          to="/dashboard"
-          className="flex items-center gap-3 px-6 py-3 hover:bg-slate-700"
+        <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+                `flex items-center gap-3 px-6 py-3 ${
+                    isActive
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-slate-700"
+                }`
+            }
         >
-          <FaTachometerAlt />
-          Dashboard
-        </Link>
+            <FaTachometerAlt />
+            Dashboard
+        </NavLink>
 
-        <Link
+        <NavLink
           to="/inventory"
-          className="flex items-center gap-3 px-6 py-3 hover:bg-slate-700"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 hover:bg-slate-700 ${
+                    isActive
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-slate-700"
+                }`
+          }
         >
           <FaBoxes />
           Inventory
-        </Link>
+        </NavLink>
 
-        <Link
+        <NavLink
           to="/products"
-          className="flex items-center gap-3 px-6 py-3 hover:bg-slate-700"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 hover:bg-slate-700 ${
+                    isActive
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-slate-700"
+                }`
+          }
         >
           <FaShoppingCart />
           Products
-        </Link>
+        </NavLink>
 
-        <Link
+        <NavLink
           to="/forecast"
-          className="flex items-center gap-3 px-6 py-3 hover:bg-slate-700"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 hover:bg-slate-700 ${
+                    isActive
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-slate-700"
+                }`
+          }
         >
           <FaChartLine />
           Forecast
-        </Link>
+        </NavLink>
 
-        <Link
+        <NavLink
           to="/sales"
-          className="flex items-center gap-3 px-6 py-3 hover:bg-slate-700"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 hover:bg-slate-700 ${
+                    isActive
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-slate-700"
+                }`
+          }
         >
           <FaChartLine />
           Sales
-        </Link>
+        </NavLink>
 
-        <Link
+        <NavLink
           to="/reports"
-          className="flex items-center gap-3 px-6 py-3 hover:bg-slate-700"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 hover:bg-slate-700 ${
+                    isActive
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-slate-700"
+                }`
+          }
         >
           <FaFileAlt />
           Reports
-        </Link>
+        </NavLink>
 
-        <Link
+        <NavLink
           to="/settings"
-          className="flex items-center gap-3 px-6 py-3 hover:bg-slate-700"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 hover:bg-slate-700 ${
+                    isActive
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-slate-700"
+                }`
+          }
         >
           <FaCog />
           Settings
-        </Link>
+        </NavLink>
 
       </nav>
 

@@ -2,6 +2,29 @@ import Layout from "../components/Layout";
 import DashboardCard from "../components/DashboardCard";
 import SalesChart from "../components/SalesChart";
 import AIRecommendations from "../components/AIRecommendations";
+import InventoryChart from "../components/InventoryChart";
+import LowStockAlerts from "../components/LowStockAlerts";
+
+<NavLink
+  to="/dashboard"
+  className={({ isActive }) =>
+    `flex items-center gap-3 px-6 py-3 ${
+      isActive
+        ? "bg-blue-600 text-white"
+        : "hover:bg-slate-700"
+    }`
+  }
+>
+  <FaTachometerAlt />
+  Dashboard
+</NavLink>
+
+const dashboardData = {
+  sales: "₹8,240",
+  products: 1245,
+  lowStock: 18,
+  accuracy: "96%",
+};
 
 function Dashboard() {
   return (
@@ -14,30 +37,35 @@ function Dashboard() {
         <div className="grid grid-cols-4 gap-6">
           <DashboardCard
             title="Today's Sales"
-            value="$8,240"
+            value={dashboardData.sales}
             color="text-blue-600"
           />
 
           <DashboardCard
             title="Products"
-            value="1,245"
+            value={dashboardData.products}
             color="text-green-600"
           />
 
           <DashboardCard
             title="Low Stock"
-            value="18"
+            value={dashboardData.lowStock}
             color="text-red-600"
           />
 
           <DashboardCard
             title="Forecast Accuracy"
-            value="96%"
+            value={dashboardData.accuracy}
             color="text-purple-600"
           />
         </div>
         <SalesChart />
         <AIRecommendations />
+
+        <div className="grid grid-cols-2 gap-6 mt-8">
+            <InventoryChart />
+            <LowStockAlerts />
+        </div>
       </div>
     </Layout>
   );
