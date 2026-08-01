@@ -5,20 +5,6 @@ import AIRecommendations from "../components/AIRecommendations";
 import InventoryChart from "../components/InventoryChart";
 import LowStockAlerts from "../components/LowStockAlerts";
 
-<NavLink
-  to="/dashboard"
-  className={({ isActive }) =>
-    `flex items-center gap-3 px-6 py-3 ${
-      isActive
-        ? "bg-blue-600 text-white"
-        : "hover:bg-slate-700"
-    }`
-  }
->
-  <FaTachometerAlt />
-  Dashboard
-</NavLink>
-
 const dashboardData = {
   sales: "₹8,240",
   products: 1245,

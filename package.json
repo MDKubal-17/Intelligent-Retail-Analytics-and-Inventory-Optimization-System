@@ -1,6 +1,32 @@
 {
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.1",
     "tailwindcss": "^4.3.3"
-  }
+  },
+  "name": "final_year_project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MDKubal-17/Intelligent-Retail-Analytics-and-Inventory-Optimization-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MDKubal-17/Intelligent-Retail-Analytics-and-Inventory-Optimization-System/issues"
+  },
+  "homepage": "https://github.com/MDKubal-17/Intelligent-Retail-Analytics-and-Inventory-Optimization-System#readme",
+  "description": ""
+    
+
 }
