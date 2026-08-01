@@ -1,9 +1,12 @@
 # Dependencies
 node_modules/
-
+retail-analytics-frontend/node_modules/
+server/node_modules/
 # Environment variables
 .env
 server/.env
+
+
 
 # Build folders
 dist/
