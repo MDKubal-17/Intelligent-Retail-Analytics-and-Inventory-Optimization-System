@@ -1,0 +1,4 @@
+1. node "d:\Final_year_project\server\server.js"
+
+2. cd retail-analytics-frontend           
+3. npm run dev

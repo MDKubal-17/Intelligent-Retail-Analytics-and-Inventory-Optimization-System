@@ -1,6 +1,6 @@
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 
-function ProductCard({ product }) {
+function ProductCard({ product, onEdit, onView, onDelete={handleDelete} }) {
   const isLowStock = product.stock < 20;
 
   return (
@@ -38,16 +38,25 @@ function ProductCard({ product }) {
 
         <div className="flex justify-between mt-6">
 
-          <button className="text-blue-600 hover:text-blue-800">
-            <FaEye size={20} />
+          <button
+              onClick={() => onView(product)}
+              className="text-blue-600 hover:text-blue-800"
+          >
+              <FaEye size={20}/>
           </button>
 
-          <button className="text-green-600 hover:text-green-800">
+          <button
+            onClick={() => onEdit(product)}
+            className="text-green-600 hover:text-green-800"
+          >
             <FaEdit size={20} />
           </button>
 
-          <button className="text-red-600 hover:text-red-800">
-            <FaTrash size={20} />
+          <button
+              onClick={() => onDelete(product.id)}
+              className="text-red-600 hover:text-red-800"
+          >
+              <FaTrash size={20}/>
           </button>
 
         </div>
