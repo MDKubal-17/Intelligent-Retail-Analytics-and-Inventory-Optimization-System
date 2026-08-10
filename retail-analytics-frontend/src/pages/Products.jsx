@@ -1,111 +1,119 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import ProductCard from "../components/ProductCard";
+import { loadInventoryData } from "../utils/loadInventoryData";
 import ProductModal from "../components/ProductModal";
-import ViewProductModal from "../components/ViewProductModal";
-
-const productData = [
-  {
-    id: 1,
-    name: "Wireless Mouse",
-    category: "Electronics",
-    price: 599,
-    stock: 120,
-    image:
-      "https://static.vecteezy.com/system/resources/thumbnails/067/697/759/small/the-gray-wireless-mouse-features-colorful-led-light-accents-on-its-contours-offering-a-modern-design-for-everyday-use-png.png",
-  },
-  {
-    id: 2,
-    name: "Laptop",
-    category: "Electronics",
-    price: 45000,
-    stock: 15,
-    image:
-      "https://images.rawpixel.com/image_png_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA5L3Jhd3BpeGVsX29mZmljZV8zMV9waG90b19vZl9hX2xhcHRvcF9tb2NrdXBfY2xvc2UtdXBfbWluaW1hbF9pc182M2Q2NzViOS00YjlhLTQ3OWEtOGMyMS1hYWQwMjViNWYzZDIucG5n.png",
-  },
-  {
-    id: 3,
-    name: "Office Chair",
-    category: "Furniture",
-    price: 3200,
-    stock: 42,
-    image:
-      "https://img.pikbest.com/png-images/20241124/white-modern-office-chair-with-ergonomic-design-isolated-on-a-pure-backdrop_11129282.png!sw800",
-  },
-  {
-    id: 4,
-    name: "USB Cable",
-    category: "Accessories",
-    price: 299,
-    stock: 8,
-    image:
-      "https://w7.pngwing.com/pngs/152/351/png-transparent-oneplus-3t-battery-charger-quick-charge-electrical-cable-usb-electronics-adapter-cable-thumbnail.png",
-  },
-];
+import ProductDetailsModal from "../components/ProductDetailsModal";
+import DeleteModal from "../components/DeleteModal";
 
 function Products() {
+  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState(productData);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [viewProduct, setViewProduct] = useState(null);
+  const [deleteProduct, setDeleteProduct] = useState(null);
 
+  // Load products from CSV
+  useEffect(() => {
+    loadInventoryData()
+      .then((data) => {
+        const formattedProducts = data.map((item) => ({
+          id: Number(item.product_id),
+          name: item.product,
+          category: item.category,
+          price: Number(item.unit_price),
+          stock: Number(item.current_stock),
+          reorderLevel: Number(item.reorder_level),
+          image: item.image || "",
+        }));
+
+        setProducts(formattedProducts);
+      })
+      .catch((error) => {
+        console.error("CSV ERROR:", error);
+      });
+  }, []);
+
+  // Search products
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Save product (Add / Edit)
   const handleSave = (product) => {
-    const newProduct = {
+    const formattedProduct = {
       ...product,
       price: Number(product.price),
       stock: Number(product.stock),
+      reorderLevel: Number(product.reorderLevel || 20),
     };
 
     if (selectedProduct) {
-      // Edit existing product
-      setProducts(
-        products.map((p) =>
+      // EDIT PRODUCT
+      setProducts((currentProducts) =>
+        currentProducts.map((p) =>
           p.id === selectedProduct.id
-            ? { ...newProduct, id: selectedProduct.id }
+            ? {
+                ...p,
+                ...formattedProduct,
+                id: selectedProduct.id,
+              }
             : p
         )
       );
     } else {
-      // Add new product
-      setProducts([
-        ...products,
+      // ADD NEW PRODUCT
+      setProducts((currentProducts) => [
+        ...currentProducts,
         {
-          ...newProduct,
+          ...formattedProduct,
           id: Date.now(),
         },
       ]);
     }
 
-    setSelectedProduct(null);
+    // Close modal
     setIsModalOpen(false);
+    setSelectedProduct(null);
   };
 
-  const handleView = (product) => {
-      setViewProduct(product);
+  const handleDelete = () => {
+    if (!deleteProduct) return;
+
+    setProducts((currentProducts) =>
+      currentProducts.filter(
+        (product) => product.id !== deleteProduct.id
+      )
+    );
+
+    setDeleteProduct(null);
   };
 
-  const handleDelete = (id) => {
-
-      if(window.confirm("Delete this product?")){
-
-          setProducts(
-              products.filter(product => product.id !== id)
-          );
-
-      }
-
+  // Edit product
+  const handleEdit = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
   };
 
   return (
     <Layout>
+      {/* Page Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Products</h1>
+        <div>
+          <h1 className="text-3xl font-bold">
+            Products
+          </h1>
 
+          <p className="text-gray-500">
+            Manage your retail products and inventory
+          </p>
+        </div>
+      </div>
+
+      {/* Add Product Button */}
+      <div className="flex justify-end mb-6">
         <button
           onClick={() => {
             setSelectedProduct(null);
@@ -117,6 +125,7 @@ function Products() {
         </button>
       </div>
 
+      {/* Search */}
       <input
         type="text"
         placeholder="Search products..."
@@ -125,37 +134,41 @@ function Products() {
         className="border rounded-lg px-4 py-2 w-full mb-8"
       />
 
+      {/* Product Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {filteredProducts.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
-            onEdit={(product) => {
-              setSelectedProduct(product);
-              setIsModalOpen(true);
-            }}
-            onView={handleView}
-            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onDelete={(product) => setDeleteProduct(product)}
+            onView={(product) => setViewProduct(product)}
           />
         ))}
       </div>
 
+      {/* Product Modal */}
       <ProductModal
         isOpen={isModalOpen}
         onClose={() => {
-          setSelectedProduct(null);
           setIsModalOpen(false);
+          setSelectedProduct(null);
         }}
         onSave={handleSave}
         product={selectedProduct}
       />
-
-      <ViewProductModal
-          product={viewProduct}
-          onClose={() => setViewProduct(null)}
+      <ProductDetailsModal
+        product={viewProduct}
+        onClose={() => setViewProduct(null)}
+      />
+      <DeleteModal
+        product={deleteProduct}
+        onClose={() => setDeleteProduct(null)}
+        onConfirm={handleDelete}
       />
     </Layout>
   );
 }
 
 export default Products;
+
