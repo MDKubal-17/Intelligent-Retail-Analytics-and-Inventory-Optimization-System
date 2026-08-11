@@ -35,6 +35,14 @@ function Inventory() {
     (item) => item.stock <= item.reorderLevel
   );
 
+  const calculateReorderQuantity = (item) => {
+    if (item.stock >= item.reorderLevel) {
+      return 0;
+    }
+
+    return item.reorderLevel * 2 - item.stock;
+  };
+
   return (
     <Layout>
       <div className="mb-6">
@@ -115,6 +123,10 @@ function Inventory() {
                 </th>
 
                 <th className="text-left p-4">
+                  Recommended Reorder
+                </th>
+
+                <th className="text-left p-4">
                   Status
                 </th>
               </tr>
@@ -145,6 +157,18 @@ function Inventory() {
 
                     <td className="p-4">
                       {item.reorderLevel}
+                    </td>
+
+                    <td className="p-4">
+                      {calculateReorderQuantity(item) > 0 ? (
+                        <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-medium">
+                          Reorder {calculateReorderQuantity(item)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">
+                          No reorder needed
+                        </span>
+                      )}
                     </td>
 
                     <td className="p-4">
