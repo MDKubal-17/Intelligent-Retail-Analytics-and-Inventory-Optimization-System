@@ -5,6 +5,7 @@ import cors from "cors";
 
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import reportRoutes from "./routes/reports.js";
 
 // Load environment variables
 dotenv.config();
@@ -22,9 +23,23 @@ app.use(express.json());  // Parses JSON request body
 // Routes
 app.use("/api/auth", authRoutes);
 
+// Mount report routes (/api/reports/government-audit)
+app.use("/api/reports", reportRoutes);
+
 // Test Route
 app.get("/", (req, res) => {
     res.send("API is running...");
+});
+
+// 404 Handler for Unhandled Routes
+app.use((req, res, next) => {
+    res.status(404).json({ message: `Route ${req.originalUrl} not found` });
+});
+
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+    console.error("Global Server Error:", err.stack);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
 });
 
 // Start Server
