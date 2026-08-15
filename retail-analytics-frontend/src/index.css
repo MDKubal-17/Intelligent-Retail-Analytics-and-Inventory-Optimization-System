@@ -108,7 +108,172 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
-} */
+} 
 
+@import "tailwindcss"; */
 
 @import "tailwindcss";
+/* Floating Bottom Hover Box */
+.floating-bottom-box {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.floating-bottom-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.22);
+}
+
+.floating-action-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-back {
+  background-color: transparent;
+  color: var(--text, #334155);
+  border: 1px solid var(--border, #cbd5e1);
+}
+
+.btn-refresh-box {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.btn-refresh-box:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.system-ready {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background-color: #dcfce7;
+  color: #15803d;
+}
+/* -------------------------------------------------------------------------- */
+/* THEME VARIABLES & GLOBAL STYLES                                            */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --bg: #ffffff;
+  --text: #111827;
+  --text-h: #000000;
+  --card-bg: #f9fafb;
+  --border: #e5e7eb;
+}
+
+/* Applied when <html data-theme="dark"> is set by Settings.jsx */
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --text: #e2e8f0;
+  --text-h: #ffffff;
+  --card-bg: #1e293b;
+  --border: #334155;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* -------------------------------------------------------------------------- */
+/* SETTINGS PAGE CUSTOM STYLES                                               */
+/* -------------------------------------------------------------------------- */
+
+.settings-page {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.settings-page h2,
+.settings-page h3 {
+  color: var(--text-h);
+}
+
+.settings-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.25s ease;
+}
+
+.settings-card input,
+.settings-card select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.btn-save {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #003366;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.alert-success {
+  background-color: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #badbcc;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
