@@ -24,7 +24,6 @@ function useAutoRefreshSession(intervalMs = 300000) {
         await fetch(`${API_BASE_URL}/api/auth/refresh-session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', // Ensures session cookie is sent with the request
         });
       } catch (err) {
         console.warn('Background session refresh ping failed.');
@@ -42,12 +41,12 @@ function AppContent() {
 
   const currentPath = location.pathname.toLowerCase();
   
-  // Hide controls on "/", "/login", and "/dashboard"
-  const hidePageControls = currentPath === '/' || currentPath === '/login' || currentPath === '/dashboard';
+  // Hide controls bar on "/", "/login", and "/dashboard"
+  const hideControls = currentPath === '/' || currentPath === '/login' || currentPath === '/dashboard';
 
   return (
     <div className="app-container">
-      {!hidePageControls && <PageControls />}
+      {!hideControls && <PageControls />}
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Login />} />
