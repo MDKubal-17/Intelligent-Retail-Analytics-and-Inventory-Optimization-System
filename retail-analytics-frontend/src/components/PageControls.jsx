@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const AUTH_ROUTES = ['/login', '/signup', '/register'];
+const AUTH_ROUTES = ['/', '/login', '/signup', '/register'];
 
 export const PageControls = () => {
   const navigate = useNavigate();
@@ -14,13 +14,20 @@ export const PageControls = () => {
     return null;
   }
 
-  // 2. Safe Back Handler
+  // 2. Safe Back Handler: Stops back navigation if on /dashboard or moving to auth pages
   const handleBack = () => {
-    // location.key !== 'default' confirms the user has navigated within the SPA
+    const currentPath = location.pathname.toLowerCase();
+
+    // If currently on dashboard, don't allow going back further
+    if (currentPath === '/dashboard') {
+      return; 
+    }
+
+    // Check if internal navigation history exists
     if (location.key !== 'default') {
       navigate(-1);
     } else {
-      // Fallback safe route to prevent infinite loops or getting stuck
+      // Fallback safe route
       navigate('/dashboard', { replace: true });
     }
   };
@@ -56,6 +63,7 @@ export const PageControls = () => {
         onClick={handleBack} 
         className="floating-action-btn btn-back"
         title="Go Back"
+        disabled={location.pathname.toLowerCase() === '/dashboard'}
       >
         ← Back
       </button>
