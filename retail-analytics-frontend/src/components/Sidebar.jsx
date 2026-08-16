@@ -134,8 +134,9 @@ function Sidebar() {
       {/* Logout */}
       <div className="absolute bottom-5 w-full">
 
+        // Updated Logout Button in Sidebar.jsx
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => navigate("/login", { replace: true })}
           className="flex items-center gap-3 w-full px-6 py-3 text-red-400 hover:bg-slate-700"
         >
           <FaSignOutAlt />
