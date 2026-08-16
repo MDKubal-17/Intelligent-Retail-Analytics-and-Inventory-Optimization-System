@@ -9,6 +9,21 @@ function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  // Prevent backtracking to protected pages via browser history
+  useEffect(() => {
+    window.history.pushState(null, "", window.location.href);
+    
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+  
   const handleLogin = async (e) => {
     e.preventDefault();
 
