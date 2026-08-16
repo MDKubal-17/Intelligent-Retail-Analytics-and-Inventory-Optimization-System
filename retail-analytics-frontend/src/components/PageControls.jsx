@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const AUTH_ROUTES = ['/', '/login', '/signup', '/register'];
+// Configuration: List of routes where page controls or back buttons should be hidden
+const AUTH_ROUTES = ['/login', '/signup', '/register'];
 
 export const PageControls = () => {
   const navigate = useNavigate();
@@ -9,25 +10,18 @@ export const PageControls = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState('');
 
-  // 1. Hide control bar on auth routes
+  // 1. Hide the entire control bar on login and authentication pages
   if (AUTH_ROUTES.includes(location.pathname.toLowerCase())) {
     return null;
   }
 
-  // 2. Safe Back Handler: Stops back navigation if on /dashboard or moving to auth pages
+  // 2. Safe Back Handler: Prevents infinite loops and unwanted redirects
   const handleBack = () => {
-    const currentPath = location.pathname.toLowerCase();
-
-    // If currently on dashboard, don't allow going back further
-    if (currentPath === '/dashboard') {
-      return; 
-    }
-
-    // Check if internal navigation history exists
-    if (location.key !== 'default') {
+    // Check if there is valid history to go back to within the site
+    if (window.history.length > 2) {
       navigate(-1);
     } else {
-      // Fallback safe route
+      // Fallback safe route to prevent infinite loops
       navigate('/dashboard', { replace: true });
     }
   };
@@ -63,7 +57,6 @@ export const PageControls = () => {
         onClick={handleBack} 
         className="floating-action-btn btn-back"
         title="Go Back"
-        disabled={location.pathname.toLowerCase() === '/dashboard'}
       >
         ← Back
       </button>
