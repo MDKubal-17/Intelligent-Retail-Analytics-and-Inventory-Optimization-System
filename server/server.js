@@ -20,14 +20,6 @@ const app = express();
 app.use(cors());          // Allows React frontend to communicate with backend
 app.use(express.json());  // Parses JSON request body
 
-// 🛑 Prevent Browser Snapshot Caching (Bfcache Protection)
-app.use((req, res, next) => {
-    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-    res.set("Pragma", "no-cache");
-    res.set("Expires", "0");
-    next();
-});
-
 // Routes
 app.use("/api/auth", authRoutes);
 
