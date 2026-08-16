@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 // Configuration: List of routes where page controls or back buttons should be hidden
-const AUTH_ROUTES = ['/login', '/signup', '/register'];
+const AUTH_ROUTES = ['/', '/login', '/signup', '/register'];
+// Define top-level primary pages where "Back" should be disabled
+const PRIMARY_ROUTES = ['/dashboard'];
 
 export const PageControls = () => {
   const navigate = useNavigate();
@@ -15,8 +17,12 @@ export const PageControls = () => {
     return null;
   }
 
+  // Check if current route is a primary root page
+  const isPrimaryPage = PRIMARY_ROUTES.includes(location.pathname.toLowerCase());
+
   // 2. Safe Back Handler: Prevents infinite loops and unwanted redirects
   const handleBack = () => {
+    if (isPrimaryPage) return;
     // Check if there is valid history to go back to within the site
     if (window.history.length > 2) {
       navigate(-1);
@@ -55,8 +61,14 @@ export const PageControls = () => {
     <div className="floating-bottom-box no-print">
       <button 
         onClick={handleBack} 
-        className="floating-action-btn btn-back"
-        title="Go Back"
+        disabled={isPrimaryPage}
+        className={`floating-action-btn btn-back ${isPrimaryPage ? 'btn-disabled' : ''}`}
+        title={isPrimaryPage ? "Back action unavailable on primary page" : "Go Back"}
+        style={{
+          opacity: isPrimaryPage ? 0.5 : 1,
+          cursor: isPrimaryPage ? 'not-allowed' : 'pointer',
+          backgroundColor: isPrimaryPage ? '#9ca3af' : undefined
+        }}
       >
         ← Back
       </button>
