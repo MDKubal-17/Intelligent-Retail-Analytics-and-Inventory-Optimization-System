@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -9,39 +9,18 @@ function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  // Verify active session with backend on load
-  useEffect(() => {
-    const checkActiveSession = async () => {
-      try {
-        const response = await axios.post(
-          `${API_BASE_URL}/api/auth/refresh-session`,
-          {},
-          { withCredentials: true } // Pass session cookies
-        );
-        if (response.data?.success) {
-          navigate("/dashboard", { replace: true });
-        }
-      } catch (err) {
-        // Not authenticated, stay on login page
-      }
-    };
-
-    checkActiveSession();
-  }, [navigate]);
-
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/auth/login`,
-        { email, password },
-        { withCredentials: true } // Ensures cookie/session is set
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        email,
+        password,
+      });
 
       alert(response.data.message || "Login successful");
 
-      // Replace /login entry in history so back button cannot hit login
+      // Replace /login in history stack so user isn't stuck in a back loop
       navigate("/dashboard", { replace: true });
 
     } catch (error) {
