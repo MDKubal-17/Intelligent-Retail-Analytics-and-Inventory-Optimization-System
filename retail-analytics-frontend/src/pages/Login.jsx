@@ -27,7 +27,7 @@ function Login() {
 
       alert(response.data.message);
 
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
 
   } catch (error) {
 
