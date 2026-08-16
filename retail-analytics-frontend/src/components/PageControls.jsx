@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-// Configuration: List of routes where page controls or back buttons should be hidden
 const AUTH_ROUTES = ['/login', '/signup', '/register'];
 
 export const PageControls = () => {
@@ -10,18 +9,18 @@ export const PageControls = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState('');
 
-  // 1. Hide the entire control bar on login and authentication pages
+  // 1. Hide control bar on auth routes
   if (AUTH_ROUTES.includes(location.pathname.toLowerCase())) {
     return null;
   }
 
-  // 2. Safe Back Handler: Prevents infinite loops and unwanted redirects
+  // 2. Safe Back Handler
   const handleBack = () => {
-    // Check if there is valid history to go back to within the site
-    if (window.history.length > 2) {
+    // location.key !== 'default' confirms the user has navigated within the SPA
+    if (location.key !== 'default') {
       navigate(-1);
     } else {
-      // Fallback safe route to prevent infinite loops
+      // Fallback safe route to prevent infinite loops or getting stuck
       navigate('/dashboard', { replace: true });
     }
   };
