@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Layout from "../components/Layout";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export const Settings = () => {
   // Read user from logged-in session
-  const storedUser = JSON.parse(localStorage.getItem("user")) || {
-    id: "",
-    email: "admin@retail.com",
-  };
+  const storedUser =
+    JSON.parse(localStorage.getItem("user")) || {
+      id: "",
+      email: "",
+    };
 
   const [email, setEmail] = useState(storedUser.email);
 
@@ -18,107 +17,48 @@ export const Settings = () => {
     confirm: "",
   });
 
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") || "light"
-  );
-
   const [message, setMessage] = useState({
     type: "",
     text: "",
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Synchronize theme attribute and Tailwind dark class on <html>
-  useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [theme]);
-
-  const handleUpdate = async (e) => {
+  const handleUpdate = (e) => {
     e.preventDefault();
 
-    setMessage({ type: "", text: "" });
-
-    // Block password change for this phase as requested
+    // Show error if user attempts to fill out password fields
     if (passwords.current || passwords.new || passwords.confirm) {
       setMessage({
         type: "error",
-        text: "Password updates are currently disabled in this phase.",
+        text: "Password updates are currently disabled.",
       });
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/update-settings`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: storedUser.id,
-          email,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage({
-          type: "success",
-          text: data.message || "Settings updated successfully!",
-        });
-
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            ...storedUser,
-            email,
-          })
-        );
-      } else {
-        setMessage({
-          type: "error",
-          text: data.message || "Failed to update settings.",
-        });
-      }
-    } catch (err) {
-      // If API server is optional for pure theme/local settings, save local state
-      setMessage({
-        type: "success",
-        text: "Preferences saved locally.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setMessage({
+      type: "success",
+      text: "Settings saved successfully!",
+    });
   };
 
   return (
     <Layout>
-      <div className="text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
+      <div>
         {/* Page Heading */}
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          Settings
+        </h1>
 
-        <p className="text-gray-500 dark:text-gray-400 mb-8">
+        <p className="text-gray-500 mb-8">
           Manage your account and application preferences.
         </p>
 
-        {/* Message Alert */}
+        {/* Message */}
         {message.text && (
           <div
-            className={`mb-6 p-4 rounded-lg font-medium ${
+            className={`mb-6 p-4 rounded-lg ${
               message.type === "error"
-                ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                : "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
             }`}
           >
             {message.text}
@@ -126,14 +66,17 @@ export const Settings = () => {
         )}
 
         <form onSubmit={handleUpdate}>
+
           {/* Account Settings */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6 transition-colors duration-200">
-            <h2 className="text-xl font-bold mb-6 text-slate-800 dark:text-white">
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+
+            <h2 className="text-xl font-bold mb-6">
               👤 User Credentials
             </h2>
 
             <div className="mb-5">
-              <label className="block font-medium mb-2 text-slate-700 dark:text-slate-200">
+
+              <label className="block font-medium mb-2">
                 Email Address
               </label>
 
@@ -142,87 +85,107 @@ export const Settings = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
             </div>
 
             <div className="mb-5">
-              <label className="block font-medium mb-2 text-slate-700 dark:text-slate-200">
+
+              <label className="block font-medium mb-2">
                 Current Password
               </label>
 
               <input
                 type="password"
-                placeholder="Disabled in this phase"
                 value={passwords.current}
                 onChange={(e) =>
-                  setPasswords({ ...passwords, current: e.target.value })
+                  setPasswords({
+                    ...passwords,
+                    current: e.target.value,
+                  })
                 }
-                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
             </div>
 
             <div className="mb-5">
-              <label className="block font-medium mb-2 text-slate-700 dark:text-slate-200">
+
+              <label className="block font-medium mb-2">
                 New Password
               </label>
 
               <input
                 type="password"
-                placeholder="Disabled in this phase"
                 value={passwords.new}
                 onChange={(e) =>
-                  setPasswords({ ...passwords, new: e.target.value })
+                  setPasswords({
+                    ...passwords,
+                    new: e.target.value,
+                  })
                 }
-                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
             </div>
 
             <div>
-              <label className="block font-medium mb-2 text-slate-700 dark:text-slate-200">
+
+              <label className="block font-medium mb-2">
                 Confirm Password
               </label>
 
               <input
                 type="password"
-                placeholder="Disabled in this phase"
                 value={passwords.confirm}
                 onChange={(e) =>
-                  setPasswords({ ...passwords, confirm: e.target.value })
+                  setPasswords({
+                    ...passwords,
+                    confirm: e.target.value,
+                  })
                 }
-                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
             </div>
+
           </div>
 
           {/* Appearance */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 mb-6 transition-colors duration-200">
-            <h2 className="text-xl font-bold mb-6 text-slate-800 dark:text-white">
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+
+            <h2 className="text-xl font-bold mb-6">
               🎨 Appearance
             </h2>
 
-            <label className="block font-medium mb-2 text-slate-700 dark:text-slate-200">
+            <label className="block font-medium mb-2">
               Theme
             </label>
 
             <select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value)}
-              className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              defaultValue="light"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="light">☀️ Light Theme</option>
-              <option value="dark">🌙 Dark Theme</option>
+              <option value="light">
+                ☀️ Light Theme
+              </option>
+
+              <option value="dark">
+                🌙 Dark Theme
+              </option>
             </select>
+
           </div>
 
           {/* Save Button */}
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
           >
-            {isSubmitting ? "Saving..." : "Save Settings"}
+            Save Settings
           </button>
+
         </form>
       </div>
     </Layout>
