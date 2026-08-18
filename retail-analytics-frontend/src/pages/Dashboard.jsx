@@ -1,4 +1,6 @@
+
 import { useEffect, useState } from "react";
+
 import Layout from "../components/Layout";
 import DashboardCard from "../components/DashboardCard";
 import SalesChart from "../components/SalesChart";
@@ -6,103 +8,168 @@ import AIRecommendations from "../components/AIRecommendations";
 import InventoryChart from "../components/InventoryChart";
 import LowStockAlerts from "../components/LowStockAlerts";
 
-import { loadSalesData } from "../utils/loadSalesData";
-import { loadInventoryData } from "../utils/loadInventoryData";
 
 function Dashboard() {
-  const [sales, setSales] = useState([]);
-  const [inventory, setInventory] = useState([]);
+
+  const [dashboardData, setDashboardData] = useState({
+    totalSales: 0,
+    products: 0,
+    lowStock: 0,
+    inventoryValue: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
+
+
+  // ==========================================
+  // LOAD DASHBOARD DATA FROM BACKEND
+  // ==========================================
 
   useEffect(() => {
-    // Load sales CSV
-    loadSalesData()
-      .then((data) => {
-        setSales(data);
+
+    fetch("http://127.0.0.1:5000/api/dashboard")
+
+      .then((response) => {
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        return response.json();
+
       })
+
+      .then((data) => {
+
+        console.log("Dashboard from backend:", data);
+
+        setDashboardData({
+          totalSales: Number(data.total_sales) || 0,
+          products: Number(data.total_products) || 0,
+          lowStock: Number(data.low_stock) || 0,
+          inventoryValue:
+            Number(data.total_inventory_value) || 0,
+        });
+
+        setLoading(false);
+
+      })
+
       .catch((error) => {
-        console.error("Sales CSV ERROR:", error);
+
+        console.error(
+          "DASHBOARD BACKEND ERROR:",
+          error
+        );
+
+        setLoading(false);
+
       });
 
-    // Load inventory CSV
-    loadInventoryData()
-      .then((data) => {
-        setInventory(data);
-      })
-      .catch((error) => {
-        console.error("Inventory CSV ERROR:", error);
-      });
   }, []);
 
-  // -------------------------
-  // Dashboard Calculations
-  // -------------------------
 
-  const totalRevenue = sales.reduce(
-    (total, sale) => total + Number(sale.revenue || 0),
-    0
-  );
+  // ==========================================
+  // FORMAT RUPEES
+  // ==========================================
 
-  const totalProducts = inventory.length;
+  const formatRupees = (value) => {
 
-  const lowStock = inventory.filter(
-    (item) =>
-      Number(item.current_stock) <=
-      Number(item.reorder_level)
-  ).length;
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(value);
 
-  const totalStock = inventory.reduce(
-    (total, item) =>
-      total + Number(item.current_stock || 0),
-    0
-  );
+  };
+
 
   return (
+
     <Layout>
+
       <div>
 
         <h1 className="text-3xl font-bold mb-6">
           Dashboard
         </h1>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-4 gap-6">
+
+        {/* ==============================
+            KPI CARDS
+        ============================== */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
           <DashboardCard
-            title="Total Revenue"
-            value={`₹${totalRevenue.toLocaleString("en-IN", {
-              maximumFractionDigits: 0,
-            })}`}
+            title="Total Sales"
+            value={
+              loading
+                ? "Loading..."
+                : formatRupees(
+                    dashboardData.totalSales
+                  )
+            }
             color="text-blue-600"
           />
 
+
           <DashboardCard
             title="Products"
-            value={totalProducts}
+            value={
+              loading
+                ? "Loading..."
+                : dashboardData.products
+            }
             color="text-green-600"
           />
 
+
           <DashboardCard
             title="Low Stock"
-            value={lowStock}
+            value={
+              loading
+                ? "Loading..."
+                : dashboardData.lowStock
+            }
             color="text-red-600"
           />
 
+
           <DashboardCard
-            title="Total Stock Units"
-            value={totalStock.toLocaleString("en-IN")}
+            title="Inventory Value"
+            value={
+              loading
+                ? "Loading..."
+                : formatRupees(
+                    dashboardData.inventoryValue
+                  )
+            }
             color="text-purple-600"
           />
 
         </div>
 
-        {/* Sales */}
+
+        {/* ==============================
+            SALES CHART
+        ============================== */}
+
         <SalesChart />
 
-        {/* AI Recommendations */}
+
+        {/* ==============================
+            AI RECOMMENDATIONS
+        ============================== */}
+
         <AIRecommendations />
 
-        {/* Inventory */}
-        <div className="grid grid-cols-2 gap-6 mt-8">
+
+        {/* ==============================
+            INVENTORY + LOW STOCK
+        ============================== */}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
 
           <InventoryChart />
 
@@ -111,8 +178,11 @@ function Dashboard() {
         </div>
 
       </div>
+
     </Layout>
+
   );
 }
+
 
 export default Dashboard;
