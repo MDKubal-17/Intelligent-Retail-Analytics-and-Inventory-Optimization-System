@@ -6,7 +6,7 @@ import ProductModal from "../components/ProductModal";
 import ProductDetailsModal from "../components/ProductDetailsModal";
 import DeleteModal from "../components/DeleteModal";
 
-const API_BASE_URL = import.meta.env.VITE_FLASK_API_URL || 'https://retail-backend-9qvb.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_FLASK_API_URL || "https://retail-analytics-backend-md.onrender.com"
 
 function Products() {
   const [products, setProducts] = useState([]);
