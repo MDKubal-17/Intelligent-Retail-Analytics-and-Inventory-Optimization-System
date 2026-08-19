@@ -3,6 +3,7 @@ from flask_cors import CORS
 import csv
 import os
 import tempfile
+from flask import send_from_directory
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -31,6 +32,28 @@ def home():
     })
 
 
+# ==========================================
+# SERVE RAW CSV DATA FILES
+# ==========================================
+
+@app.route("/api/inventory/data/sales", methods=["GET"])
+@app.route("/api/data/sales", methods=["GET"])
+def serve_sales_csv():
+    """Serves the raw sales_data.csv file to frontend charts."""
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    if not os.path.exists(os.path.join(data_dir, "sales_data.csv")):
+        return jsonify({"error": "Sales CSV not found"}), 404
+    return send_from_directory(data_dir, "sales_data.csv", mimetype="text/csv")
+
+
+@app.route("/api/inventory/data/inventory", methods=["GET"])
+@app.route("/api/data/inventory", methods=["GET"])
+def serve_inventory_csv():
+    """Serves the raw inventory_data.csv file to frontend charts."""
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    if not os.path.exists(os.path.join(data_dir, "inventory_data.csv")):
+        return jsonify({"error": "Inventory CSV not found"}), 404
+    return send_from_directory(data_dir, "inventory_data.csv", mimetype="text/csv")
 # ==========================================
 # GET ALL PRODUCTS
 # ==========================================
