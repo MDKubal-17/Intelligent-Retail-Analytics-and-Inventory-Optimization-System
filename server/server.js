@@ -7,7 +7,8 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reports.js";
 import inventoryRoutes from './routes/inventoryRoutes.js';
-
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 // Load environment variables
 dotenv.config();
 
@@ -30,6 +31,8 @@ app.use("/api/reports", reportRoutes);
 // Mount blockchain inventory & transaction routes
 app.use("/api/inventory", inventoryRoutes);
 
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/products", productRoutes);
 // Test Route
 app.get("/", (req, res) => {
     res.send("API is running...");
