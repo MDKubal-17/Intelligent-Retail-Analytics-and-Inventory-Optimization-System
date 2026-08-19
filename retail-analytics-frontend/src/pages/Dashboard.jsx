@@ -8,6 +8,7 @@ import AIRecommendations from "../components/AIRecommendations";
 import InventoryChart from "../components/InventoryChart";
 import LowStockAlerts from "../components/LowStockAlerts";
 
+const FLASK_API_URL = import.meta.env.VITE_FLASK_API_URL || "http://127.0.0.1:5000";
 
 function Dashboard() {
 
@@ -27,7 +28,7 @@ function Dashboard() {
 
   useEffect(() => {
 
-    fetch("http://127.0.0.1:5000/api/dashboard")
+    fetch(`${FLASK_API_URL}/api/dashboard`)
 
       .then((response) => {
 
