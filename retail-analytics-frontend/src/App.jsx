@@ -15,7 +15,7 @@ import Transactions from "./pages/Transactions";
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://retail-backend-9qvb.onrender.com';
 
 // Inline Hook for background session pings
 function useAutoRefreshSession(intervalMs = 300000) {
