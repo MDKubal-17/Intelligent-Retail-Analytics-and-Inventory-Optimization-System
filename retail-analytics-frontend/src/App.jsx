@@ -11,6 +11,7 @@ import Inventory from './pages/Inventory';
 import Products from './pages/Products';
 import Forecast from './pages/Forecast';
 import Sales from './pages/Sales';
+import Transactions from "./pages/Transactions"; 
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
@@ -56,6 +57,7 @@ function AppContent() {
           <Route path="/products" element={<Products />} />
           <Route path="/forecast" element={<Forecast />} />
           <Route path="/sales" element={<Sales />} />
+          <Route path="/transactions" element={<Transactions />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
