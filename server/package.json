@@ -8,6 +8,8 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@fast-csv/format": "^5.0.0",
+    "csv-parser": "^3.0.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -15,3 +17,4 @@
     "mongoose": "^8.2.0"
   }
 }
+
