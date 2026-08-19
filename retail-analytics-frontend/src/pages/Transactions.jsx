@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-
+import Layout from "../components/Layout";
 export default function Transactions() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,8 @@ export default function Transactions() {
   }, []);
 
   return (
-    <div className="p-8 ml-64 bg-slate-50 min-h-screen">
+    <Layout>
+    <div className="p-6 bg-slate-50 min-h-screen">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800">Inventory Transaction Ledger</h2>
         <p className="text-sm text-slate-500">Audit history for all inventory quantity changes</p>
@@ -122,5 +123,6 @@ export default function Transactions() {
         </div>
       )}
     </div>
+    </Layout>
   );
 }
