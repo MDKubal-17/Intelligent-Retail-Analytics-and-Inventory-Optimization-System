@@ -1,0 +1,301 @@
+transaction_id,date,product_id,product,category,quantity,unit_price,discount_percent,revenue
+TXN0040,2026-01-01,8,Webcam,Electronics,12,2199,0,26388.0
+TXN0105,2026-01-01,1,Wireless Mouse,Electronics,6,599,0,3594.0
+TXN0140,2026-01-01,9,Headphones,Electronics,5,1799,0,8995.0
+TXN0245,2026-01-01,3,Office Chair,Furniture,7,3200,5,21280.0
+TXN0270,2026-01-01,9,Headphones,Electronics,11,1799,10,17810.1
+TXN0008,2026-01-02,5,Bluetooth Speaker,Electronics,13,2499,0,32487.0
+TXN0037,2026-01-03,9,Headphones,Electronics,11,1799,0,19789.0
+TXN0211,2026-01-03,9,Headphones,Electronics,9,1799,0,16191.0
+TXN0227,2026-01-04,5,Bluetooth Speaker,Electronics,12,2499,10,26989.2
+TXN0184,2026-01-05,8,Webcam,Electronics,12,2199,10,23749.2
+TXN0215,2026-01-05,8,Webcam,Electronics,2,2199,0,4398.0
+TXN0260,2026-01-06,10,Notebook,Stationery,13,99,0,1287.0
+TXN0001,2026-01-07,2,Laptop,Electronics,12,45000,0,540000.0
+TXN0116,2026-01-07,7,Desk Lamp,Furniture,3,899,0,2697.0
+TXN0122,2026-01-07,4,USB Cable,Accessories,11,299,0,3289.0
+TXN0148,2026-01-07,3,Office Chair,Furniture,1,3200,0,3200.0
+TXN0192,2026-01-07,10,Notebook,Stationery,15,99,0,1485.0
+TXN0004,2026-01-08,1,Wireless Mouse,Electronics,2,599,0,1198.0
+TXN0126,2026-01-08,6,Keyboard,Electronics,2,1299,0,2598.0
+TXN0186,2026-01-08,1,Wireless Mouse,Electronics,4,599,0,2396.0
+TXN0025,2026-01-09,4,USB Cable,Accessories,13,299,0,3887.0
+TXN0109,2026-01-10,9,Headphones,Electronics,14,1799,0,25186.0
+TXN0119,2026-01-10,7,Desk Lamp,Furniture,14,899,5,11956.7
+TXN0295,2026-01-10,8,Webcam,Electronics,3,2199,10,5937.3
+TXN0111,2026-01-11,3,Office Chair,Furniture,5,3200,0,16000.0
+TXN0261,2026-01-11,10,Notebook,Stationery,13,99,0,1287.0
+TXN0033,2026-01-13,2,Laptop,Electronics,14,45000,0,630000.0
+TXN0071,2026-01-13,2,Laptop,Electronics,11,45000,10,445500.0
+TXN0065,2026-01-14,8,Webcam,Electronics,11,2199,0,24189.0
+TXN0273,2026-01-14,8,Webcam,Electronics,4,2199,0,8796.0
+TXN0047,2026-01-15,4,USB Cable,Accessories,4,299,10,1076.4
+TXN0082,2026-01-15,3,Office Chair,Furniture,9,3200,0,28800.0
+TXN0252,2026-01-16,2,Laptop,Electronics,3,45000,0,135000.0
+TXN0035,2026-01-17,10,Notebook,Stationery,7,99,5,658.35
+TXN0166,2026-01-17,4,USB Cable,Accessories,7,299,5,1988.35
+TXN0083,2026-01-18,3,Office Chair,Furniture,10,3200,0,32000.0
+TXN0198,2026-01-18,6,Keyboard,Electronics,9,1299,0,11691.0
+TXN0059,2026-01-19,6,Keyboard,Electronics,9,1299,0,11691.0
+TXN0092,2026-01-19,2,Laptop,Electronics,9,45000,0,405000.0
+TXN0248,2026-01-19,8,Webcam,Electronics,11,2199,0,24189.0
+TXN0086,2026-01-21,10,Notebook,Stationery,7,99,10,623.7
+TXN0164,2026-01-21,9,Headphones,Electronics,3,1799,0,5397.0
+TXN0048,2026-01-22,2,Laptop,Electronics,12,45000,5,513000.0
+TXN0236,2026-01-22,5,Bluetooth Speaker,Electronics,4,2499,0,9996.0
+TXN0003,2026-01-23,9,Headphones,Electronics,10,1799,5,17090.5
+TXN0072,2026-01-24,1,Wireless Mouse,Electronics,15,599,0,8985.0
+TXN0146,2026-01-24,6,Keyboard,Electronics,14,1299,0,18186.0
+TXN0264,2026-01-24,8,Webcam,Electronics,8,2199,0,17592.0
+TXN0011,2026-01-25,7,Desk Lamp,Furniture,6,899,0,5394.0
+TXN0297,2026-01-26,8,Webcam,Electronics,9,2199,5,18801.45
+TXN0195,2026-01-27,4,USB Cable,Accessories,12,299,0,3588.0
+TXN0230,2026-01-27,8,Webcam,Electronics,14,2199,0,30786.0
+TXN0108,2026-01-29,1,Wireless Mouse,Electronics,2,599,0,1198.0
+TXN0099,2026-01-30,5,Bluetooth Speaker,Electronics,15,2499,0,37485.0
+TXN0250,2026-01-30,7,Desk Lamp,Furniture,9,899,0,8091.0
+TXN0196,2026-01-31,10,Notebook,Stationery,13,99,10,1158.3
+TXN0221,2026-01-31,4,USB Cable,Accessories,12,299,0,3588.0
+TXN0222,2026-01-31,6,Keyboard,Electronics,12,1299,10,14029.2
+TXN0155,2026-02-01,4,USB Cable,Accessories,8,299,0,2392.0
+TXN0254,2026-02-01,8,Webcam,Electronics,8,2199,0,17592.0
+TXN0137,2026-02-02,9,Headphones,Electronics,4,1799,5,6836.2
+TXN0061,2026-02-03,9,Headphones,Electronics,12,1799,10,19429.2
+TXN0274,2026-02-03,9,Headphones,Electronics,15,1799,0,26985.0
+TXN0029,2026-02-05,5,Bluetooth Speaker,Electronics,4,2499,10,8996.4
+TXN0032,2026-02-05,4,USB Cable,Accessories,9,299,5,2556.45
+TXN0298,2026-02-06,1,Wireless Mouse,Electronics,7,599,0,4193.0
+TXN0235,2026-02-08,1,Wireless Mouse,Electronics,3,599,10,1617.3
+TXN0043,2026-02-09,4,USB Cable,Accessories,6,299,0,1794.0
+TXN0100,2026-02-09,9,Headphones,Electronics,5,1799,0,8995.0
+TXN0118,2026-02-10,5,Bluetooth Speaker,Electronics,13,2499,0,32487.0
+TXN0159,2026-02-10,8,Webcam,Electronics,12,2199,5,25068.6
+TXN0022,2026-02-11,4,USB Cable,Accessories,8,299,5,2272.4
+TXN0106,2026-02-11,5,Bluetooth Speaker,Electronics,12,2499,5,28488.6
+TXN0115,2026-02-11,4,USB Cable,Accessories,13,299,0,3887.0
+TXN0191,2026-02-11,2,Laptop,Electronics,5,45000,0,225000.0
+TXN0190,2026-02-12,6,Keyboard,Electronics,10,1299,10,11691.0
+TXN0244,2026-02-14,4,USB Cable,Accessories,9,299,0,2691.0
+TXN0041,2026-02-15,9,Headphones,Electronics,9,1799,0,16191.0
+TXN0180,2026-02-16,8,Webcam,Electronics,1,2199,0,2199.0
+TXN0208,2026-02-16,6,Keyboard,Electronics,8,1299,0,10392.0
+TXN0263,2026-02-16,5,Bluetooth Speaker,Electronics,10,2499,5,23740.5
+TXN0063,2026-02-18,7,Desk Lamp,Furniture,2,899,0,1798.0
+TXN0078,2026-02-18,3,Office Chair,Furniture,5,3200,0,16000.0
+TXN0223,2026-02-19,3,Office Chair,Furniture,4,3200,5,12160.0
+TXN0006,2026-02-20,9,Headphones,Electronics,12,1799,10,19429.2
+TXN0194,2026-02-20,7,Desk Lamp,Furniture,2,899,10,1618.2
+TXN0120,2026-02-21,4,USB Cable,Accessories,14,299,5,3976.7
+TXN0168,2026-02-22,1,Wireless Mouse,Electronics,14,599,5,7966.7
+TXN0101,2026-02-23,10,Notebook,Stationery,12,99,0,1188.0
+TXN0242,2026-02-23,2,Laptop,Electronics,11,45000,0,495000.0
+TXN0052,2026-02-24,7,Desk Lamp,Furniture,15,899,10,12136.5
+TXN0189,2026-02-25,10,Notebook,Stationery,8,99,0,792.0
+TXN0007,2026-02-26,7,Desk Lamp,Furniture,8,899,10,6472.8
+TXN0057,2026-02-26,10,Notebook,Stationery,1,99,0,99.0
+TXN0173,2026-02-26,10,Notebook,Stationery,8,99,0,792.0
+TXN0002,2026-02-27,4,USB Cable,Accessories,3,299,0,897.0
+TXN0055,2026-02-27,4,USB Cable,Accessories,2,299,0,598.0
+TXN0147,2026-02-27,5,Bluetooth Speaker,Electronics,13,2499,0,32487.0
+TXN0238,2026-02-27,10,Notebook,Stationery,13,99,10,1158.3
+TXN0058,2026-02-28,1,Wireless Mouse,Electronics,2,599,0,1198.0
+TXN0226,2026-02-28,5,Bluetooth Speaker,Electronics,6,2499,0,14994.0
+TXN0017,2026-03-01,2,Laptop,Electronics,14,45000,0,630000.0
+TXN0292,2026-03-01,7,Desk Lamp,Furniture,14,899,5,11956.7
+TXN0212,2026-03-03,2,Laptop,Electronics,12,45000,5,513000.0
+TXN0094,2026-03-04,2,Laptop,Electronics,6,45000,0,270000.0
+TXN0152,2026-03-04,7,Desk Lamp,Furniture,3,899,0,2697.0
+TXN0067,2026-03-05,2,Laptop,Electronics,4,45000,0,180000.0
+TXN0258,2026-03-06,10,Notebook,Stationery,1,99,0,99.0
+TXN0131,2026-03-07,4,USB Cable,Accessories,1,299,5,284.05
+TXN0160,2026-03-08,8,Webcam,Electronics,13,2199,0,28587.0
+TXN0209,2026-03-08,6,Keyboard,Electronics,6,1299,0,7794.0
+TXN0012,2026-03-09,10,Notebook,Stationery,13,99,0,1287.0
+TXN0030,2026-03-09,9,Headphones,Electronics,12,1799,10,19429.2
+TXN0051,2026-03-09,3,Office Chair,Furniture,9,3200,10,25920.0
+TXN0089,2026-03-09,4,USB Cable,Accessories,7,299,0,2093.0
+TXN0093,2026-03-09,9,Headphones,Electronics,3,1799,0,5397.0
+TXN0026,2026-03-10,7,Desk Lamp,Furniture,2,899,0,1798.0
+TXN0038,2026-03-10,9,Headphones,Electronics,13,1799,0,23387.0
+TXN0251,2026-03-10,3,Office Chair,Furniture,14,3200,0,44800.0
+TXN0163,2026-03-11,4,USB Cable,Accessories,6,299,0,1794.0
+TXN0220,2026-03-11,8,Webcam,Electronics,5,2199,0,10995.0
+TXN0255,2026-03-11,7,Desk Lamp,Furniture,9,899,10,7281.9
+TXN0228,2026-03-12,3,Office Chair,Furniture,1,3200,0,3200.0
+TXN0284,2026-03-12,2,Laptop,Electronics,13,45000,5,555750.0
+TXN0018,2026-03-13,7,Desk Lamp,Furniture,8,899,0,7192.0
+TXN0069,2026-03-13,3,Office Chair,Furniture,8,3200,0,25600.0
+TXN0205,2026-03-13,2,Laptop,Electronics,15,45000,5,641250.0
+TXN0145,2026-03-14,2,Laptop,Electronics,9,45000,10,364500.0
+TXN0225,2026-03-14,10,Notebook,Stationery,2,99,0,198.0
+TXN0231,2026-03-14,10,Notebook,Stationery,8,99,5,752.4
+TXN0247,2026-03-15,4,USB Cable,Accessories,12,299,0,3588.0
+TXN0229,2026-03-16,9,Headphones,Electronics,12,1799,0,21588.0
+TXN0280,2026-03-16,8,Webcam,Electronics,9,2199,0,19791.0
+TXN0039,2026-03-17,2,Laptop,Electronics,7,45000,0,315000.0
+TXN0171,2026-03-18,6,Keyboard,Electronics,13,1299,5,16042.65
+TXN0286,2026-03-18,5,Bluetooth Speaker,Electronics,14,2499,10,31487.4
+TXN0121,2026-03-20,6,Keyboard,Electronics,14,1299,0,18186.0
+TXN0053,2026-03-21,4,USB Cable,Accessories,7,299,0,2093.0
+TXN0277,2026-03-21,3,Office Chair,Furniture,9,3200,0,28800.0
+TXN0027,2026-03-22,10,Notebook,Stationery,4,99,5,376.2
+TXN0080,2026-03-22,1,Wireless Mouse,Electronics,1,599,0,599.0
+TXN0157,2026-03-23,10,Notebook,Stationery,13,99,5,1222.65
+TXN0293,2026-03-23,1,Wireless Mouse,Electronics,12,599,5,6828.6
+TXN0045,2026-03-24,10,Notebook,Stationery,8,99,0,792.0
+TXN0204,2026-03-24,5,Bluetooth Speaker,Electronics,14,2499,0,34986.0
+TXN0269,2026-03-24,5,Bluetooth Speaker,Electronics,2,2499,5,4748.1
+TXN0181,2026-03-25,7,Desk Lamp,Furniture,4,899,5,3416.2
+TXN0123,2026-03-26,7,Desk Lamp,Furniture,5,899,0,4495.0
+TXN0266,2026-03-26,3,Office Chair,Furniture,7,3200,5,21280.0
+TXN0296,2026-03-26,10,Notebook,Stationery,14,99,0,1386.0
+TXN0265,2026-03-27,7,Desk Lamp,Furniture,6,899,0,5394.0
+TXN0010,2026-03-28,4,USB Cable,Accessories,2,299,0,598.0
+TXN0175,2026-03-28,7,Desk Lamp,Furniture,11,899,5,9394.55
+TXN0182,2026-03-28,6,Keyboard,Electronics,13,1299,5,16042.65
+TXN0207,2026-03-28,7,Desk Lamp,Furniture,1,899,5,854.05
+TXN0009,2026-03-29,7,Desk Lamp,Furniture,5,899,0,4495.0
+TXN0232,2026-03-29,8,Webcam,Electronics,3,2199,0,6597.0
+TXN0197,2026-03-30,1,Wireless Mouse,Electronics,9,599,5,5121.45
+TXN0124,2026-03-31,5,Bluetooth Speaker,Electronics,11,2499,10,24740.1
+TXN0185,2026-03-31,1,Wireless Mouse,Electronics,4,599,0,2396.0
+TXN0064,2026-04-01,7,Desk Lamp,Furniture,7,899,5,5978.35
+TXN0113,2026-04-01,2,Laptop,Electronics,13,45000,10,526500.0
+TXN0112,2026-04-02,1,Wireless Mouse,Electronics,4,599,0,2396.0
+TXN0046,2026-04-03,2,Laptop,Electronics,15,45000,0,675000.0
+TXN0272,2026-04-03,9,Headphones,Electronics,10,1799,5,17090.5
+TXN0133,2026-04-04,4,USB Cable,Accessories,7,299,0,2093.0
+TXN0019,2026-04-05,3,Office Chair,Furniture,6,3200,0,19200.0
+TXN0075,2026-04-08,3,Office Chair,Furniture,1,3200,5,3040.0
+TXN0170,2026-04-08,10,Notebook,Stationery,8,99,0,792.0
+TXN0130,2026-04-09,2,Laptop,Electronics,15,45000,10,607500.0
+TXN0165,2026-04-09,4,USB Cable,Accessories,12,299,0,3588.0
+TXN0294,2026-04-09,7,Desk Lamp,Furniture,11,899,0,9889.0
+TXN0074,2026-04-13,4,USB Cable,Accessories,15,299,0,4485.0
+TXN0066,2026-04-14,1,Wireless Mouse,Electronics,12,599,0,7188.0
+TXN0084,2026-04-14,4,USB Cable,Accessories,2,299,10,538.2
+TXN0136,2026-04-14,6,Keyboard,Electronics,12,1299,0,15588.0
+TXN0216,2026-04-14,4,USB Cable,Accessories,12,299,0,3588.0
+TXN0073,2026-04-15,3,Office Chair,Furniture,8,3200,5,24320.0
+TXN0278,2026-04-15,9,Headphones,Electronics,2,1799,0,3598.0
+TXN0271,2026-04-16,8,Webcam,Electronics,1,2199,0,2199.0
+TXN0150,2026-04-17,8,Webcam,Electronics,15,2199,10,29686.5
+TXN0237,2026-04-17,9,Headphones,Electronics,10,1799,10,16191.0
+TXN0183,2026-04-18,5,Bluetooth Speaker,Electronics,5,2499,0,12495.0
+TXN0199,2026-04-18,1,Wireless Mouse,Electronics,14,599,5,7966.7
+TXN0153,2026-04-19,2,Laptop,Electronics,4,45000,0,180000.0
+TXN0141,2026-04-21,4,USB Cable,Accessories,13,299,10,3498.3
+TXN0200,2026-04-21,2,Laptop,Electronics,6,45000,5,256500.0
+TXN0257,2026-04-21,1,Wireless Mouse,Electronics,12,599,0,7188.0
+TXN0129,2026-04-22,6,Keyboard,Electronics,10,1299,10,11691.0
+TXN0174,2026-04-22,5,Bluetooth Speaker,Electronics,8,2499,0,19992.0
+TXN0201,2026-04-22,3,Office Chair,Furniture,3,3200,10,8640.0
+TXN0095,2026-04-23,3,Office Chair,Furniture,14,3200,10,40320.0
+TXN0162,2026-04-23,5,Bluetooth Speaker,Electronics,2,2499,0,4998.0
+TXN0256,2026-04-23,8,Webcam,Electronics,2,2199,10,3958.2
+TXN0070,2026-04-24,2,Laptop,Electronics,13,45000,10,526500.0
+TXN0143,2026-04-24,8,Webcam,Electronics,11,2199,0,24189.0
+TXN0068,2026-04-25,9,Headphones,Electronics,3,1799,5,5127.15
+TXN0239,2026-04-26,7,Desk Lamp,Furniture,15,899,5,12810.75
+TXN0076,2026-04-27,5,Bluetooth Speaker,Electronics,5,2499,5,11870.25
+TXN0268,2026-04-27,1,Wireless Mouse,Electronics,2,599,0,1198.0
+TXN0290,2026-04-27,7,Desk Lamp,Furniture,15,899,0,13485.0
+TXN0090,2026-04-28,5,Bluetooth Speaker,Electronics,6,2499,0,14994.0
+TXN0091,2026-04-28,1,Wireless Mouse,Electronics,10,599,10,5391.0
+TXN0154,2026-04-29,9,Headphones,Electronics,1,1799,10,1619.1
+TXN0206,2026-04-29,4,USB Cable,Accessories,10,299,10,2691.0
+TXN0279,2026-04-29,2,Laptop,Electronics,2,45000,0,90000.0
+TXN0036,2026-04-30,10,Notebook,Stationery,9,99,0,891.0
+TXN0176,2026-04-30,3,Office Chair,Furniture,15,3200,0,48000.0
+TXN0203,2026-04-30,8,Webcam,Electronics,7,2199,10,13853.7
+TXN0246,2026-05-01,10,Notebook,Stationery,5,99,0,495.0
+TXN0299,2026-05-01,2,Laptop,Electronics,13,45000,0,585000.0
+TXN0062,2026-05-02,10,Notebook,Stationery,4,99,5,376.2
+TXN0144,2026-05-02,9,Headphones,Electronics,13,1799,0,23387.0
+TXN0188,2026-05-02,3,Office Chair,Furniture,11,3200,0,35200.0
+TXN0081,2026-05-03,10,Notebook,Stationery,9,99,10,801.9
+TXN0233,2026-05-03,5,Bluetooth Speaker,Electronics,2,2499,0,4998.0
+TXN0281,2026-05-04,7,Desk Lamp,Furniture,8,899,0,7192.0
+TXN0103,2026-05-06,9,Headphones,Electronics,5,1799,0,8995.0
+TXN0234,2026-05-06,7,Desk Lamp,Furniture,2,899,10,1618.2
+TXN0005,2026-05-10,4,USB Cable,Accessories,10,299,0,2990.0
+TXN0135,2026-05-10,5,Bluetooth Speaker,Electronics,5,2499,5,11870.25
+TXN0158,2026-05-10,10,Notebook,Stationery,7,99,10,623.7
+TXN0285,2026-05-10,6,Keyboard,Electronics,5,1299,0,6495.0
+TXN0054,2026-05-13,8,Webcam,Electronics,8,2199,0,17592.0
+TXN0262,2026-05-13,8,Webcam,Electronics,11,2199,5,22979.55
+TXN0087,2026-05-14,10,Notebook,Stationery,6,99,0,594.0
+TXN0132,2026-05-14,1,Wireless Mouse,Electronics,15,599,10,8086.5
+TXN0161,2026-05-14,5,Bluetooth Speaker,Electronics,8,2499,0,19992.0
+TXN0044,2026-05-16,9,Headphones,Electronics,15,1799,0,26985.0
+TXN0049,2026-05-17,2,Laptop,Electronics,13,45000,0,585000.0
+TXN0177,2026-05-17,10,Notebook,Stationery,1,99,5,94.05
+TXN0013,2026-05-18,8,Webcam,Electronics,2,2199,5,4178.1
+TXN0172,2026-05-18,7,Desk Lamp,Furniture,12,899,10,9709.2
+TXN0288,2026-05-18,8,Webcam,Electronics,8,2199,0,17592.0
+TXN0167,2026-05-19,6,Keyboard,Electronics,8,1299,5,9872.4
+TXN0219,2026-05-21,7,Desk Lamp,Furniture,6,899,0,5394.0
+TXN0014,2026-05-22,2,Laptop,Electronics,5,45000,10,202500.0
+TXN0110,2026-05-22,10,Notebook,Stationery,3,99,5,282.15
+TXN0218,2026-05-22,8,Webcam,Electronics,9,2199,0,19791.0
+TXN0282,2026-05-22,8,Webcam,Electronics,3,2199,5,6267.15
+TXN0289,2026-05-22,6,Keyboard,Electronics,13,1299,10,15198.3
+TXN0213,2026-05-23,8,Webcam,Electronics,13,2199,0,28587.0
+TXN0178,2026-05-25,10,Notebook,Stationery,11,99,0,1089.0
+TXN0139,2026-05-26,10,Notebook,Stationery,5,99,5,470.25
+TXN0253,2026-05-26,10,Notebook,Stationery,15,99,0,1485.0
+TXN0015,2026-05-28,6,Keyboard,Electronics,4,1299,0,5196.0
+TXN0079,2026-05-29,1,Wireless Mouse,Electronics,12,599,10,6469.2
+TXN0085,2026-05-29,4,USB Cable,Accessories,10,299,0,2990.0
+TXN0127,2026-05-29,3,Office Chair,Furniture,5,3200,0,16000.0
+TXN0031,2026-05-30,7,Desk Lamp,Furniture,7,899,0,6293.0
+TXN0169,2026-05-30,7,Desk Lamp,Furniture,12,899,0,10788.0
+TXN0056,2026-05-31,1,Wireless Mouse,Electronics,9,599,0,5391.0
+TXN0224,2026-05-31,5,Bluetooth Speaker,Electronics,13,2499,10,29238.3
+TXN0240,2026-05-31,5,Bluetooth Speaker,Electronics,7,2499,0,17493.0
+TXN0128,2026-06-02,2,Laptop,Electronics,7,45000,0,315000.0
+TXN0283,2026-06-03,4,USB Cable,Accessories,9,299,0,2691.0
+TXN0096,2026-06-06,5,Bluetooth Speaker,Electronics,13,2499,10,29238.3
+TXN0149,2026-06-06,8,Webcam,Electronics,14,2199,0,30786.0
+TXN0202,2026-06-07,5,Bluetooth Speaker,Electronics,13,2499,10,29238.3
+TXN0114,2026-06-08,7,Desk Lamp,Furniture,12,899,0,10788.0
+TXN0241,2026-06-08,10,Notebook,Stationery,1,99,10,89.1
+TXN0134,2026-06-09,6,Keyboard,Electronics,6,1299,0,7794.0
+TXN0187,2026-06-09,1,Wireless Mouse,Electronics,3,599,0,1797.0
+TXN0300,2026-06-09,6,Keyboard,Electronics,12,1299,5,14808.6
+TXN0034,2026-06-10,3,Office Chair,Furniture,3,3200,5,9120.0
+TXN0249,2026-06-10,5,Bluetooth Speaker,Electronics,10,2499,0,24990.0
+TXN0276,2026-06-11,1,Wireless Mouse,Electronics,10,599,0,5990.0
+TXN0021,2026-06-12,10,Notebook,Stationery,3,99,10,267.3
+TXN0104,2026-06-12,2,Laptop,Electronics,7,45000,0,315000.0
+TXN0023,2026-06-13,5,Bluetooth Speaker,Electronics,12,2499,10,26989.2
+TXN0042,2026-06-13,5,Bluetooth Speaker,Electronics,9,2499,10,20241.9
+TXN0028,2026-06-14,7,Desk Lamp,Furniture,8,899,0,7192.0
+TXN0179,2026-06-14,2,Laptop,Electronics,7,45000,0,315000.0
+TXN0214,2026-06-15,8,Webcam,Electronics,12,2199,5,25068.6
+TXN0142,2026-06-17,10,Notebook,Stationery,6,99,5,564.3
+TXN0050,2026-06-18,3,Office Chair,Furniture,8,3200,10,23040.0
+TXN0287,2026-06-18,10,Notebook,Stationery,8,99,0,792.0
+TXN0016,2026-06-19,1,Wireless Mouse,Electronics,4,599,0,2396.0
+TXN0077,2026-06-19,9,Headphones,Electronics,12,1799,5,20508.6
+TXN0098,2026-06-19,5,Bluetooth Speaker,Electronics,2,2499,0,4998.0
+TXN0217,2026-06-19,5,Bluetooth Speaker,Electronics,10,2499,0,24990.0
+TXN0243,2026-06-19,5,Bluetooth Speaker,Electronics,2,2499,0,4998.0
+TXN0267,2026-06-19,5,Bluetooth Speaker,Electronics,7,2499,10,15743.7
+TXN0097,2026-06-20,1,Wireless Mouse,Electronics,14,599,10,7547.4
+TXN0156,2026-06-20,8,Webcam,Electronics,9,2199,10,17811.9
+TXN0060,2026-06-21,5,Bluetooth Speaker,Electronics,8,2499,0,19992.0
+TXN0088,2026-06-21,4,USB Cable,Accessories,12,299,0,3588.0
+TXN0117,2026-06-21,7,Desk Lamp,Furniture,14,899,0,12586.0
+TXN0259,2026-06-22,4,USB Cable,Accessories,14,299,10,3767.4
+TXN0125,2026-06-23,7,Desk Lamp,Furniture,14,899,10,11327.4
+TXN0138,2026-06-23,7,Desk Lamp,Furniture,12,899,0,10788.0
+TXN0193,2026-06-23,10,Notebook,Stationery,15,99,5,1410.75
+TXN0024,2026-06-25,4,USB Cable,Accessories,6,299,0,1794.0
+TXN0102,2026-06-25,4,USB Cable,Accessories,11,299,0,3289.0
+TXN0151,2026-06-28,4,USB Cable,Accessories,7,299,5,1988.35
+TXN0275,2026-06-28,8,Webcam,Electronics,8,2199,0,17592.0
+TXN0291,2026-06-28,4,USB Cable,Accessories,4,299,10,1076.4
+TXN0020,2026-06-29,5,Bluetooth Speaker,Electronics,15,2499,0,37485.0
+TXN0210,2026-06-29,10,Notebook,Stationery,15,99,0,1485.0
+TXN0107,2026-06-30,9,Headphones,Electronics,7,1799,10,11333.7
