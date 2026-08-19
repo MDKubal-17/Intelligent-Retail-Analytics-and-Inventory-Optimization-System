@@ -5,11 +5,7 @@ import os
 import tempfile
 
 app = Flask(__name__)
-CORS(app, origins=[
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://retail-frontend-e00p.onrender.com"
-])
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 CSV_FILE = os.path.join(
     os.path.dirname(__file__),
