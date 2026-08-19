@@ -8,7 +8,7 @@ import InventoryChart from "../components/InventoryChart";
 import LowStockAlerts from "../components/LowStockAlerts";
 
 // Replaced FLASK_API_URL with unified Express API base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://retail-backend-9qvb.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://retail-analytics-backend-md.onrender.com';
 
 function Dashboard() {
 
