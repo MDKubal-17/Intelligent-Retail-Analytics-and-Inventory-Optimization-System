@@ -1,6 +1,6 @@
 import Papa from "papaparse";
 
-const API_BASE_URL = import.meta.env.VITE_FLASK_API_URL || "https://retail-backend-9qvb.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_FLASK_API_URL || "https://retail-analytics-backend-md.onrender.com";
 
 export const loadSalesData = async () => {
   const response = await fetch(`${API_BASE_URL}/api/inventory/data/sales`);
