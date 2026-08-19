@@ -6,6 +6,8 @@ import ProductModal from "../components/ProductModal";
 import ProductDetailsModal from "../components/ProductDetailsModal";
 import DeleteModal from "../components/DeleteModal";
 
+const API_BASE_URL = import.meta.env.VITE_FLASK_API_URL || 'https://retail-backend-9qvb.onrender.com';
+
 function Products() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
@@ -19,7 +21,7 @@ function Products() {
   // ==========================================
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/products")
+    fetch(`${API_BASE_URL}/api/products`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch products");
