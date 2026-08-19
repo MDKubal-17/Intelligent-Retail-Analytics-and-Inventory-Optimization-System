@@ -14,15 +14,15 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Navigate up 2 levels: server/routes -> server -> backend root -> data/
+// Navigate up 2 levels to root-project, then into retail-analytics-backend/data/
 const CSV_PATH = path.resolve(
 	__dirname,
-	'../../data/inventory_data.csv'
+	'../../retail-analytics-backend/data/inventory_data.csv'
 );
 
 const SALES_CSV_PATH = path.resolve(
 	__dirname,
-	'../../data/sales_data.csv'
+	'../../retail-analytics-backend/data/sales_data.csv'
 );
 
 // Helper function to calculate SHA-256 block hash
