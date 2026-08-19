@@ -7,7 +7,8 @@ import AIRecommendations from "../components/AIRecommendations";
 import InventoryChart from "../components/InventoryChart";
 import LowStockAlerts from "../components/LowStockAlerts";
 
-const FLASK_API_URL = import.meta.env.VITE_FLASK_API_URL || 'https://retail-backend-9qvb.onrender.com';
+// Replaced FLASK_API_URL with unified Express API base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://retail-backend-9qvb.onrender.com';
 
 function Dashboard() {
 
@@ -20,14 +21,13 @@ function Dashboard() {
 
   const [loading, setLoading] = useState(true);
 
-
   // ==========================================
   // LOAD DASHBOARD DATA FROM BACKEND
   // ==========================================
 
   useEffect(() => {
 
-    fetch(`${FLASK_API_URL}/api/dashboard`)
+    fetch(`${API_BASE_URL}/api/dashboard`)
 
       .then((response) => {
 
@@ -43,12 +43,15 @@ function Dashboard() {
 
         console.log("Dashboard from backend:", data);
 
+        // Handles both direct `{ total_sales: ... }` and nested `{ data: { total_sales: ... } }`
+        const payload = data.data || data;
+
         setDashboardData({
-          totalSales: Number(data.total_sales) || 0,
-          products: Number(data.total_products) || 0,
-          lowStock: Number(data.low_stock) || 0,
+          totalSales: Number(payload.total_sales || payload.totalSales) || 0,
+          products: Number(payload.total_products || payload.totalProducts) || 0,
+          lowStock: Number(payload.low_stock || payload.lowStock) || 0,
           inventoryValue:
-            Number(data.total_inventory_value) || 0,
+            Number(payload.total_inventory_value || payload.totalInventoryValue) || 0,
         });
 
         setLoading(false);
@@ -68,7 +71,6 @@ function Dashboard() {
 
   }, []);
 
-
   // ==========================================
   // FORMAT RUPEES
   // ==========================================
@@ -83,7 +85,6 @@ function Dashboard() {
 
   };
 
-
   return (
 
     <Layout>
@@ -93,7 +94,6 @@ function Dashboard() {
         <h1 className="text-3xl font-bold mb-6">
           Dashboard
         </h1>
-
 
         {/* ==============================
             KPI CARDS
@@ -113,7 +113,6 @@ function Dashboard() {
             color="text-blue-600"
           />
 
-
           <DashboardCard
             title="Products"
             value={
@@ -124,7 +123,6 @@ function Dashboard() {
             color="text-green-600"
           />
 
-
           <DashboardCard
             title="Low Stock"
             value={
@@ -134,7 +132,6 @@ function Dashboard() {
             }
             color="text-red-600"
           />
-
 
           <DashboardCard
             title="Inventory Value"
@@ -150,20 +147,17 @@ function Dashboard() {
 
         </div>
 
-
         {/* ==============================
             SALES CHART
         ============================== */}
 
         <SalesChart />
 
-
         {/* ==============================
             AI RECOMMENDATIONS
         ============================== */}
 
         <AIRecommendations />
-
 
         {/* ==============================
             INVENTORY + LOW STOCK
@@ -183,6 +177,5 @@ function Dashboard() {
 
   );
 }
-
 
 export default Dashboard;
