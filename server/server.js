@@ -6,6 +6,7 @@ import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reports.js";
+import inventoryRoutes from './routes/inventoryRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +26,9 @@ app.use("/api/auth", authRoutes);
 
 // Mount report routes (/api/reports/government-audit)
 app.use("/api/reports", reportRoutes);
+
+// Mount blockchain inventory & transaction routes
+app.use("/api/inventory", inventoryRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
