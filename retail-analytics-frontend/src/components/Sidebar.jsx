@@ -6,6 +6,7 @@ import {
   FaShoppingCart,
   FaChartLine,
   FaFileAlt,
+  FaExchangeAlt,
   FaCog,
   FaSignOutAlt,
 } from "react-icons/fa";
@@ -99,6 +100,21 @@ function Sidebar() {
           Sales
         </NavLink>
 
+        {/* Transactions */}
+        <NavLink
+          to="/transactions"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 ${
+              isActive
+                ? "bg-blue-600 text-white"
+                : "hover:bg-slate-700"
+            }`
+          }
+        >
+          <FaExchangeAlt />
+          Transactions
+        </NavLink>
+
         {/* Reports */}
         <NavLink
           to="/reports"
@@ -134,7 +150,6 @@ function Sidebar() {
       {/* Logout */}
       <div className="absolute bottom-5 w-full">
 
-        {/* Updated Logout Button in Sidebar.jsx */}
         <button
           onClick={() => navigate("/login", { replace: true })}
           className="flex items-center gap-3 w-full px-6 py-3 text-red-400 hover:bg-slate-700"
