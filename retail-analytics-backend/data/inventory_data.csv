@@ -9,3 +9,5 @@ product_id,product,category,current_stock,reorder_level,unit_price,inventory_val
 8,Webcam,Electronics,28,23,2199,61572,In Stock
 9,Headphones,Electronics,30,30,1799,53970,Low Stock
 10,Bluetooth Speaker,Electronics,45,20,1200.0,54000.0,In Stock
+11,Umbrella,Accessories,15,20,499.0,4990.0,Low Stock
+12,Laptop Charger,Electronics,100,20,4999.0,249950.0,In Stock
