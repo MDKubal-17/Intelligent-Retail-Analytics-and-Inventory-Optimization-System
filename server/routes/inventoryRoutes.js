@@ -9,12 +9,20 @@ import Transaction from '../models/Transaction.js';
 
 const router = express.Router();
 
+// File: server/routes/inventoryRoutes.js
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CSV_PATH = path.join(
+// Navigate up 2 levels: server/routes -> server -> backend root -> data/
+const CSV_PATH = path.resolve(
 	__dirname,
-	'../../reatail-anaytics-backend/data/inventory_data.csv',
+	'../../data/inventory_data.csv'
+);
+
+const SALES_CSV_PATH = path.resolve(
+	__dirname,
+	'../../data/sales_data.csv'
 );
 
 // Helper function to calculate SHA-256 block hash
@@ -25,7 +33,7 @@ function calculateHash(index, previousHash, timestamp, data) {
 		.digest('hex');
 }
 
-// Helper to look up Product Name from CSV matching your exact headers
+// Helper to look up Product Name from CSV matching exact headers
 function findProductNameFromCSV(productId) {
 	return new Promise((resolve) => {
 		if (!fs.existsSync(CSV_PATH)) {
@@ -39,7 +47,6 @@ function findProductNameFromCSV(productId) {
 		fs.createReadStream(CSV_PATH)
 			.pipe(csv())
 			.on('data', (row) => {
-				// Normalize keys (handles product_id, Product_ID, productId)
 				const rowIdKey = Object.keys(row).find(
 					(k) =>
 						k.trim().toLowerCase() === 'product_id' ||
@@ -68,6 +75,39 @@ function findProductNameFromCSV(productId) {
 			});
 	});
 }
+
+// GET: Serve raw inventory_data.csv for frontend charts
+router.get('/data/inventory', (req, res) => {
+	if (fs.existsSync(CSV_PATH)) {
+		res.setHeader('Content-Type', 'text/csv');
+		return res.sendFile(CSV_PATH);
+	}
+	return res
+		.status(404)
+		.json({ success: false, error: 'inventory_data.csv file not found' });
+});
+
+// GET: Serve raw inventory_data.csv for frontend charts
+router.get('/data/inventory', (req, res) => {
+	if (fs.existsSync(CSV_PATH)) {
+		res.setHeader('Content-Type', 'text/csv');
+		return res.sendFile(CSV_PATH);
+	}
+	return res
+		.status(404)
+		.json({ success: false, error: `inventory_data.csv not found at ${CSV_PATH}` });
+});
+
+// GET: Serve raw sales_data.csv for frontend charts
+router.get('/data/sales', (req, res) => {
+	if (fs.existsSync(SALES_CSV_PATH)) {
+		res.setHeader('Content-Type', 'text/csv');
+		return res.sendFile(SALES_CSV_PATH);
+	}
+	return res
+		.status(404)
+		.json({ success: false, error: `sales_data.csv not found at ${SALES_CSV_PATH}` });
+});
 
 // POST: Record stock change in MongoDB ledger & update CSV
 router.post('/update-stock', async (req, res) => {
