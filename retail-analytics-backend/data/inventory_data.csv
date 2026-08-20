@@ -1,13 +1,12 @@
-product_id,product,category,current_stock,reorder_level,unit_price,inventory_value,status
-1,Wireless Mouse,Electronics,20,20,800.0,16000.0,Low Stock
-2,Laptop,Electronics,141,22,45000,6345000,In Stock
-3,Office Chair,Furniture,86,30,3200,275200,In Stock
-4,USB Cable,Accessories,129,27,299,38571,In Stock
-5,Bluetooth Speaker,Electronics,14,29,2499,34986,Low Stock
-6,Keyboard,Electronics,22,17,1299,28578,In Stock
-7,Desk Lamp,Furniture,78,17,899,70122,In Stock
-8,Webcam,Electronics,28,23,2199,61572,In Stock
-9,Headphones,Electronics,30,30,1799,53970,Low Stock
-10,Bluetooth Speaker,Electronics,45,20,1200.0,54000.0,In Stock
-11,Umbrella,Accessories,15,20,499.0,4990.0,Low Stock
-12,Laptop Charger,Electronics,100,20,4999.0,249950.0,In Stock
+product_id,product,category,current_stock,reorder_level,unit_price,inventory_value,status,img_url
+1,Wireless Mouse,Electronics,20,20,800.0,16000.0,Low Stock,https://www.bhphotovideo.com/images/images2500x2500/logitech_910003636_m185_wireless_mouse_blue_black_1433569.jpg
+2,Laptop,Electronics,141,22,45000.0,6345000.0,In Stock,https://laptopmedia.com/wp-content/uploads/2023/03/s3.jpg
+3,Office Chair,Furniture,86,30,3200.0,275200.0,In Stock,https://i5.walmartimages.com/seo/Mainstays-Ergonomic-Mesh-Back-Task-Office-Chair-with-Flip-up-Arms-Black-Fabric-275-lb_584c4cc5-fc4d-46d3-9a23-5a3fb5bb134e.6c681a1d24f26e9c017a3a011877e2d8.jpeg
+4,USB Cable,Accessories,129,27,299.0,38571.0,In Stock,https://tse1.mm.bing.net/th/id/OIP.TaP8u339n_kvOAHifF-y7wHaE8?r=0&rs=1&pid=ImgDetMain&o=7&rm=3
+5,Bluetooth Speaker,Electronics,14,29,2499.0,34986.0,Low Stock,https://i5.walmartimages.com/seo/Portable-Bluetooth-Speaker-Wireless-Speaker-Loud-Stereo-Deep-Bass-Sound-Outdoor-Speakers-Bluetooth-5-0-6H-Playtime-66ft-Bluetooth-Range-Dual-Pairing_d351cf16-07aa-49a0-ad8d-af1f63f66db4.118e91f62e8191c2c749bfb31701e2d5.jpeg
+6,Keyboard,Electronics,22,17,1299.0,28578.0,In Stock,https://cdn.shopify.com/s/files/1/0059/0630/1017/t/5/assets/keychron-v4-custom-mechanical-custom-keyboard-1661162984691.jpg?v=1661162987
+7,Desk Lamp,Furniture,78,17,899.0,70122.0,In Stock,https://static.vecteezy.com/system/resources/previews/028/299/455/non_2x/table-lamp-isolated-on-white-background-idea-for-interior-design-generative-ai-photo.jpeg
+8,Webcam,Electronics,28,23,2199.0,61572.0,In Stock,https://resource.logitech.com/b_white/content/dam/products/logitech/webcams/c270-hd-webcam/gallery/c270-hd-webcam-1-0224.png
+9,Headphones,Electronics,30,30,1799.0,53970.0,Low Stock,https://i5.walmartimages.com/seo/Bluetooth-Headphones-Over-Ear-Hi-Fi-Stereo-Sound-Stretchable-Wireless-5-3-Headset-Memory-Protein-Earmuffs-Noise-Cancelling-With-Mic-TF-Card-Slot-PC-C_f33885d9-eac5-4a57-8289-9197923199dd.638584c95d92b1a47a5c58d8b6a9e1b0.jpeg
+10,Bluetooth earbuds,Electronics,45,20,1200.0,54000.0,In Stock,https://i5.walmartimages.com/seo/VEATOOL-Bluetooth-Headphones-True-Wireless-Earbuds-65H-Playback-Power-Display-Earphones-Charging-Case-IPX7-Waterproof-in-Ear-Mic-TV-Smart-Phone-Compu_4fcdfe6c-8b6a-4cde-9d14-b2d02f026c7e.72bb21d7b7199d42acb8615ffbaa0470.jpeg?odnHeight=424&odnWidth=424&odnBg=FFFFFF
+11,Baby Girl Dress,Clothing,100,20,280.0,28000.0,In Stock,https://ae01.alicdn.com/kf/HTB1c0t6QkPoK1RjSZKbq6x1IXXaD/One-Year-Birthday-Baby-Girl-dress-Christmas-and-wedding-Costumes-Baby-Princess-Infant-Vestido-Kids-Baptism.jpg
