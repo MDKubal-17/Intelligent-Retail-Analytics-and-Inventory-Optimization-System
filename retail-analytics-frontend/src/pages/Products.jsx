@@ -405,7 +405,7 @@ function Products() {
           reorderLevel: Number(item.reorder_level) || 20,
           inventoryValue: Number(item.inventory_value) || 0,
           status: item.status || "",
-          image: item.image || "",
+          image: item.img_url || item.image || "",
         }));
 
         setProducts(formattedProducts);
