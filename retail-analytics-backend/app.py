@@ -620,7 +620,7 @@ def get_products():
                     "unit_price": float(row.get("unit_price", 0)),
                     "inventory_value": float(row.get("inventory_value", 0)),
                     "status": row.get("status", ""),
-                    "img_url": item.get("img_url") or item.get("image") or ""  
+                    "img_url": row.get("img_url") or row.get("image") or row.get("img") or ""
                 })
 
         return jsonify(products)
