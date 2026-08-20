@@ -619,7 +619,8 @@ def get_products():
                     "reorder_level": int(float(row.get("reorder_level", 0))),
                     "unit_price": float(row.get("unit_price", 0)),
                     "inventory_value": float(row.get("inventory_value", 0)),
-                    "status": row.get("status", "")
+                    "status": row.get("status", ""),
+                    "img_url": item.get("img_url") or item.get("image") or ""  
                 })
 
         return jsonify(products)
