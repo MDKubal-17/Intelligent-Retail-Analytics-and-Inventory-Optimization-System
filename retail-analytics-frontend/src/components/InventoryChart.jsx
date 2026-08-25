@@ -9,40 +9,36 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import { loadInventoryData } from "../utils/loadInventoryData";
-
 function InventoryChart() {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    loadInventoryData()
-      .then((inventory) => {
-        // Group inventory by category
-        const categoryStock = {};
+    fetch("http://127.0.0.1:5000/api/dashboard")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
 
-        inventory.forEach((item) => {
-          const category = item.category;
-          const stock = Number(item.current_stock) || 0;
-
-          if (categoryStock[category]) {
-            categoryStock[category] += stock;
-          } else {
-            categoryStock[category] = stock;
-          }
-        });
-
-        // Convert object into chart data
-        const chartData = Object.entries(categoryStock).map(
-          ([category, stock]) => ({
-            category,
-            stock,
-          })
-        );
-
-        setData(chartData);
+        return response.json();
       })
-      .catch((error) => {
-        console.error("Inventory Chart ERROR:", error);
+      .then((result) => {
+        console.log("Inventory chart data:", result);
+
+        if (Array.isArray(result.inventory_by_category)) {
+          setData(result.inventory_by_category);
+        } else {
+          setData([]);
+          setError("Inventory category data not available");
+        }
+      })
+      .catch((err) => {
+        console.error("Inventory Chart ERROR:", err);
+        setError("Unable to load inventory data");
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -53,11 +49,19 @@ function InventoryChart() {
         Inventory by Category
       </h2>
 
-      {data.length === 0 ? (
+      {loading && (
         <p className="text-gray-500">
           Loading inventory data...
         </p>
-      ) : (
+      )}
+
+      {error && !loading && (
+        <p className="text-red-500">
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && data.length > 0 && (
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
 
@@ -76,6 +80,12 @@ function InventoryChart() {
 
           </BarChart>
         </ResponsiveContainer>
+      )}
+
+      {!loading && !error && data.length === 0 && (
+        <p className="text-gray-500">
+          No inventory data available.
+        </p>
       )}
 
     </div>
