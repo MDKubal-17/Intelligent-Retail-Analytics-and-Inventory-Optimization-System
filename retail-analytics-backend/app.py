@@ -1,553 +1,3 @@
-# from flask import Flask, jsonify, request
-# from flask_cors import CORS
-# import csv
-# import os
-# import tempfile
-# from flask import send_from_directory
-
-# app = Flask(__name__)
-# CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-# CSV_FILE = os.path.join(
-#     os.path.dirname(__file__),
-#     "data",
-#     "inventory_data.csv"
-# )
-
-# SALES_FILE = os.path.join(
-#     os.path.dirname(__file__),
-#     "data",
-#     "sales_data.csv"
-# )
-
-
-# # ==========================================
-# # HOME
-# # ==========================================
-
-# @app.route("/")
-# def home():
-#     return jsonify({
-#         "message": "Retail Analytics Backend is running!"
-#     })
-
-
-# # ==========================================
-# # SERVE RAW CSV DATA FILES
-# # ==========================================
-
-# @app.route("/api/inventory/data/sales", methods=["GET"])
-# @app.route("/api/data/sales", methods=["GET"])
-# def serve_sales_csv():
-#     """Serves the raw sales_data.csv file to frontend charts."""
-#     data_dir = os.path.join(os.path.dirname(__file__), "data")
-#     if not os.path.exists(os.path.join(data_dir, "sales_data.csv")):
-#         return jsonify({"error": "Sales CSV not found"}), 404
-#     return send_from_directory(data_dir, "sales_data.csv", mimetype="text/csv")
-
-
-# @app.route("/api/inventory/data/inventory", methods=["GET"])
-# @app.route("/api/data/inventory", methods=["GET"])
-# def serve_inventory_csv():
-#     """Serves the raw inventory_data.csv file to frontend charts."""
-#     data_dir = os.path.join(os.path.dirname(__file__), "data")
-#     if not os.path.exists(os.path.join(data_dir, "inventory_data.csv")):
-#         return jsonify({"error": "Inventory CSV not found"}), 404
-#     return send_from_directory(data_dir, "inventory_data.csv", mimetype="text/csv")
-# # ==========================================
-# # GET ALL PRODUCTS
-# # ==========================================
-
-# @app.route("/api/products", methods=["GET"])
-# def get_products():
-
-#     products = []
-
-#     try:
-#         with open(CSV_FILE, mode="r", encoding="utf-8") as file:
-
-#             reader = csv.DictReader(file)
-
-#             for row in reader:
-
-#                 # Ignore completely empty rows
-#                 if not row.get("product_id"):
-#                     continue
-
-#                 products.append({
-#                     "id": int(row["product_id"]),
-#                     "product": row["product"],
-#                     "category": row["category"],
-#                     "current_stock": int(row["current_stock"]),
-#                     "reorder_level": int(row["reorder_level"]),
-#                     "unit_price": float(row["unit_price"]),
-#                     "inventory_value": float(row["inventory_value"]),
-#                     "status": row.get("status", "")
-#                 })
-
-#         return jsonify(products)
-
-#     except Exception as error:
-
-#         return jsonify({
-#             "error": str(error)
-#         }), 500
-
-
-# # ==========================================
-# # ADD PRODUCT
-# # ==========================================
-
-# @app.route("/api/products", methods=["POST"])
-# def add_product():
-
-#     try:
-#         data = request.get_json()
-
-#         product = data.get("product", "").strip()
-#         category = data.get("category", "").strip()
-
-#         current_stock = int(data.get("current_stock", 0))
-#         reorder_level = int(data.get("reorder_level", 0))
-#         unit_price = float(data.get("unit_price", 0))
-
-#         if not product:
-#             return jsonify({"error": "Product name is required"}), 400
-
-#         if not category:
-#             return jsonify({"error": "Category is required"}), 400
-
-#         # Calculate values
-#         inventory_value = current_stock * unit_price
-
-#         if current_stock <= reorder_level:
-#             status = "Low Stock"
-#         else:
-#             status = "In Stock"
-
-#         # --------------------------------
-#         # READ EXISTING CSV
-#         # --------------------------------
-
-#         with open(CSV_FILE, "r", encoding="utf-8", newline="") as file:
-
-#             reader = csv.DictReader(file)
-
-#             rows = list(reader)
-
-#             # Force the correct column structure
-#             fieldnames = [
-#                 "product_id",
-#                 "product",
-#                 "category",
-#                 "current_stock",
-#                 "reorder_level",
-#                 "unit_price",
-#                 "inventory_value",
-#                 "status"
-#             ]
-
-#         # --------------------------------
-#         # CLEAN EXISTING ROWS
-#         # --------------------------------
-
-#         clean_rows = []
-
-#         for row in rows:
-
-#             # Skip empty rows
-#             if not row.get("product_id"):
-#                 continue
-
-#             stock = int(row.get("current_stock", 0))
-#             reorder = int(row.get("reorder_level", 0))
-
-#             # Recalculate status
-#             if stock <= reorder:
-#                 row_status = "Low Stock"
-#             else:
-#                 row_status = "In Stock"
-
-#             clean_rows.append({
-#                 "product_id": row.get("product_id", ""),
-#                 "product": row.get("product", ""),
-#                 "category": row.get("category", ""),
-#                 "current_stock": row.get("current_stock", 0),
-#                 "reorder_level": row.get("reorder_level", 0),
-#                 "unit_price": row.get("unit_price", 0),
-#                 "inventory_value": row.get("inventory_value", 0),
-#                 "status": row_status
-#             })
-
-#         # --------------------------------
-#         # CREATE NEW ID
-#         # --------------------------------
-
-#         if clean_rows:
-
-#             new_id = max(
-#                 int(row["product_id"])
-#                 for row in clean_rows
-#             ) + 1
-
-#         else:
-#             new_id = 1
-
-#         # --------------------------------
-#         # CREATE NEW PRODUCT
-#         # --------------------------------
-
-#         new_product = {
-#             "product_id": new_id,
-#             "product": product,
-#             "category": category,
-#             "current_stock": current_stock,
-#             "reorder_level": reorder_level,
-#             "unit_price": unit_price,
-#             "inventory_value": inventory_value,
-#             "status": status
-#         }
-
-#         clean_rows.append(new_product)
-
-#         # --------------------------------
-#         # WRITE CSV
-#         # --------------------------------
-
-#         with open(
-#             CSV_FILE,
-#             "w",
-#             encoding="utf-8",
-#             newline=""
-#         ) as file:
-
-#             writer = csv.DictWriter(
-#                 file,
-#                 fieldnames=fieldnames
-#             )
-
-#             writer.writeheader()
-
-#             writer.writerows(clean_rows)
-
-#         return jsonify({
-#             "message": "Product added successfully",
-#             "product": new_product
-#         }), 201
-
-#     except Exception as error:
-
-#         return jsonify({
-#             "error": str(error)
-#         }), 500
-
-
-# @app.route("/api/products/<int:product_id>", methods=["PUT"])
-# def update_product(product_id):
-
-#     try:
-#         data = request.get_json()
-
-#         product = data.get("product", "").strip()
-#         category = data.get("category", "").strip()
-#         current_stock = int(data.get("current_stock", 0))
-#         reorder_level = int(data.get("reorder_level", 0))
-#         unit_price = float(data.get("unit_price", 0))
-
-#         inventory_value = current_stock * unit_price
-
-#         if current_stock <= reorder_level:
-#             status = "Low Stock"
-#         else:
-#             status = "In Stock"
-
-#         # Read existing products
-#         with open(
-#             CSV_FILE,
-#             "r",
-#             encoding="utf-8",
-#             newline=""
-#         ) as file:
-
-#             reader = csv.DictReader(file)
-#             rows = list(reader)
-
-#         # Make sure the product exists
-#         product_found = False
-
-#         for row in rows:
-
-#             if not row.get("product_id"):
-#                 continue
-
-#             if int(row["product_id"]) == product_id:
-
-#                 row["product"] = product
-#                 row["category"] = category
-#                 row["current_stock"] = current_stock
-#                 row["reorder_level"] = reorder_level
-#                 row["unit_price"] = unit_price
-#                 row["inventory_value"] = inventory_value
-#                 row["status"] = status
-
-#                 product_found = True
-#                 break
-
-#         if not product_found:
-
-#             return jsonify({
-#                 "error": "Product not found"
-#             }), 404
-
-#         # Columns in our CSV
-#         fieldnames = [
-#             "product_id",
-#             "product",
-#             "category",
-#             "current_stock",
-#             "reorder_level",
-#             "unit_price",
-#             "inventory_value",
-#             "status"
-#         ]
-
-#         # Remove empty rows
-#         clean_rows = [
-#             row for row in rows
-#             if row.get("product_id")
-#         ]
-
-#         # Write updated CSV
-#         with open(
-#             CSV_FILE,
-#             "w",
-#             encoding="utf-8",
-#             newline=""
-#         ) as file:
-
-#             writer = csv.DictWriter(
-#                 file,
-#                 fieldnames=fieldnames
-#             )
-
-#             writer.writeheader()
-#             writer.writerows(clean_rows)
-
-#         return jsonify({
-#             "message": "Product updated successfully"
-#         })
-
-#     except Exception as error:
-
-#         return jsonify({
-#             "error": str(error)
-#         }), 500
-
-
-# @app.route("/api/products/<int:product_id>", methods=["DELETE"])
-# def delete_product(product_id):
-
-#     try:
-#         # Read existing products
-#         with open(
-#             CSV_FILE,
-#             "r",
-#             encoding="utf-8",
-#             newline=""
-#         ) as file:
-
-#             reader = csv.DictReader(file)
-#             rows = list(reader)
-
-#         # Check whether product exists
-#         product_found = any(
-#             row.get("product_id") and
-#             int(row["product_id"]) == product_id
-#             for row in rows
-#         )
-
-#         if not product_found:
-#             return jsonify({
-#                 "error": "Product not found"
-#             }), 404
-
-#         # Remove the selected product
-#         rows = [
-#             row for row in rows
-#             if not row.get("product_id") or
-#             int(row["product_id"]) != product_id
-#         ]
-
-#         # Keep all 8 CSV columns
-#         fieldnames = [
-#             "product_id",
-#             "product",
-#             "category",
-#             "current_stock",
-#             "reorder_level",
-#             "unit_price",
-#             "inventory_value",
-#             "status"
-#         ]
-
-#         # Write updated CSV
-#         with open(
-#             CSV_FILE,
-#             "w",
-#             encoding="utf-8",
-#             newline=""
-#         ) as file:
-
-#             writer = csv.DictWriter(
-#                 file,
-#                 fieldnames=fieldnames
-#             )
-
-#             writer.writeheader()
-#             writer.writerows(rows)
-
-#         return jsonify({
-#             "message": "Product deleted successfully"
-#         })
-
-#     except Exception as error:
-
-#         return jsonify({
-#             "error": str(error)
-#         }), 500
-
-
-# @app.route("/api/dashboard", methods=["GET"])
-# def dashboard():
-
-#     try:
-#         # ==============================
-#         # READ INVENTORY CSV
-#         # ==============================
-
-#         with open(
-#             CSV_FILE,
-#             "r",
-#             encoding="utf-8",
-#             newline=""
-#         ) as file:
-
-#             inventory_reader = csv.DictReader(file)
-#             inventory = list(inventory_reader)
-
-#         # Remove empty rows
-#         inventory = [
-#             row for row in inventory
-#             if row.get("product_id")
-#         ]
-
-#         # ==============================
-#         # PRODUCT COUNT
-#         # ==============================
-
-#         total_products = len(inventory)
-
-#         # ==============================
-#         # LOW STOCK
-#         # ==============================
-
-#         low_stock_products = []
-
-#         for item in inventory:
-
-#             current_stock = int(item["current_stock"])
-#             reorder_level = int(item["reorder_level"])
-
-#             if current_stock <= reorder_level:
-#                 low_stock_products.append({
-#                     "product": item["product"],
-#                     "stock": current_stock,
-#                     "reorder_level": reorder_level
-#                 })
-
-#         low_stock_count = len(low_stock_products)
-
-#         # ==============================
-#         # TOTAL INVENTORY VALUE
-#         # ==============================
-
-#         total_inventory_value = sum(
-#             float(item["inventory_value"])
-#             for item in inventory
-#         )
-
-#         # ==============================
-#         # READ SALES CSV
-#         # ==============================
-
-#         with open(
-#             SALES_FILE,
-#             "r",
-#             encoding="utf-8",
-#             newline=""
-#         ) as file:
-
-#             sales_reader = csv.DictReader(file)
-#             sales = list(sales_reader)
-
-#         sales = [
-#             row for row in sales
-#             if row.get("transaction_id")
-#         ]
-
-#         # ==============================
-#         # TOTAL SALES
-#         # ==============================
-
-#         total_sales = 0
-
-#         for sale in sales:
-
-#             quantity = float(sale["quantity"])
-#             unit_price = float(sale["unit_price"])
-#             discount = float(
-#                 sale.get("discount_percent", 0) or 0
-#             )
-
-#             sale_value = quantity * unit_price
-
-#             discount_amount = (
-#                 sale_value * discount / 100
-#             )
-
-#             total_sales += (
-#                 sale_value - discount_amount
-#             )
-
-#         # ==============================
-#         # RESPONSE
-#         # ==============================
-
-#         return jsonify({
-#             "total_products": total_products,
-#             "low_stock": low_stock_count,
-#             "total_inventory_value": total_inventory_value,
-#             "total_sales": total_sales,
-#             "low_stock_products": low_stock_products
-#         })
-
-#     except Exception as error:
-
-#         return jsonify({
-#             "error": str(error)
-#         }), 500
-
-
-# # ==========================================
-# # START SERVER
-# # ==========================================
-
-# if __name__ == "__main__":
-
-#     app.run(
-#         debug=True,
-#         port=5000
-#     )
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import csv
@@ -555,8 +5,19 @@ import os
 
 app = Flask(__name__)
 
-# Explicitly enable CORS for all HTTP methods & JSON headers
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+# ==========================================
+# CORS
+# ==========================================
+
+CORS(
+    app,
+    resources={r"/api/*": {"origins": "*"}},
+    supports_credentials=True
+)
+
+# ==========================================
+# PATHS
+# ==========================================
 
 BASE_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -571,27 +32,45 @@ SALES_FILE = os.path.join(DATA_DIR, "sales_data.csv")
 
 @app.route("/")
 def home():
-    return jsonify({"message": "Retail Analytics Backend is running!"})
+    return jsonify({
+        "message": "Retail Analytics Backend is running!"
+    })
 
 
 # ==========================================
-# SERVE RAW CSV DATA FILES
+# SERVE RAW CSV DATA
 # ==========================================
 
 @app.route("/api/inventory/data/sales", methods=["GET"])
 @app.route("/api/data/sales", methods=["GET"])
 def serve_sales_csv():
+
     if not os.path.exists(SALES_FILE):
-        return jsonify({"error": "Sales CSV not found"}), 404
-    return send_from_directory(DATA_DIR, "sales_data.csv", mimetype="text/csv")
+        return jsonify({
+            "error": "Sales CSV not found"
+        }), 404
+
+    return send_from_directory(
+        DATA_DIR,
+        "sales_data.csv",
+        mimetype="text/csv"
+    )
 
 
 @app.route("/api/inventory/data/inventory", methods=["GET"])
 @app.route("/api/data/inventory", methods=["GET"])
 def serve_inventory_csv():
+
     if not os.path.exists(CSV_FILE):
-        return jsonify({"error": "Inventory CSV not found"}), 404
-    return send_from_directory(DATA_DIR, "inventory_data.csv", mimetype="text/csv")
+        return jsonify({
+            "error": "Inventory CSV not found"
+        }), 404
+
+    return send_from_directory(
+        DATA_DIR,
+        "inventory_data.csv",
+        mimetype="text/csv"
+    )
 
 
 # ==========================================
@@ -600,277 +79,1065 @@ def serve_inventory_csv():
 
 @app.route("/api/products", methods=["GET"])
 def get_products():
+
     products = []
+
     try:
+
         if not os.path.exists(CSV_FILE):
             return jsonify([])
 
-        with open(CSV_FILE, mode="r", encoding="utf-8") as file:
+        with open(
+            CSV_FILE,
+            mode="r",
+            encoding="utf-8",
+            newline=""
+        ) as file:
+
             reader = csv.DictReader(file)
+
             for row in reader:
+
+                # Ignore empty rows
                 if not row.get("product_id"):
                     continue
 
                 products.append({
+
                     "id": int(row["product_id"]),
-                    "product": row["product"],
-                    "category": row["category"],
-                    "current_stock": int(float(row.get("current_stock", 0))),
-                    "reorder_level": int(float(row.get("reorder_level", 0))),
-                    "unit_price": float(row.get("unit_price", 0)),
-                    "inventory_value": float(row.get("inventory_value", 0)),
-                    "status": row.get("status", ""),
-                    "img_url": row.get("img_url") or row.get("image") or row.get("img") or ""
+
+                    "product": row.get(
+                        "product",
+                        ""
+                    ),
+
+                    "category": row.get(
+                        "category",
+                        ""
+                    ),
+
+                    "current_stock": int(
+                        float(
+                            row.get(
+                                "current_stock",
+                                0
+                            ) or 0
+                        )
+                    ),
+
+                    "reorder_level": int(
+                        float(
+                            row.get(
+                                "reorder_level",
+                                0
+                            ) or 0
+                        )
+                    ),
+
+                    "unit_price": float(
+                        row.get(
+                            "unit_price",
+                            0
+                        ) or 0
+                    ),
+
+                    "inventory_value": float(
+                        row.get(
+                            "inventory_value",
+                            0
+                        ) or 0
+                    ),
+
+                    "status": row.get(
+                        "status",
+                        ""
+                    ),
+
+                    # =================================
+                    # IMAGE URL
+                    # =================================
+                    "img_url": row.get(
+                        "img_url",
+                        ""
+                    )
                 })
 
         return jsonify(products)
 
     except Exception as error:
-        return jsonify({"error": str(error)}), 500
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
 # ==========================================
 # ADD PRODUCT
 # ==========================================
 
-@app.route("/api/products", methods=["POST", "OPTIONS"])
+@app.route(
+    "/api/products",
+    methods=["POST", "OPTIONS"]
+)
 def add_product():
+
+    # Handle CORS preflight
     if request.method == "OPTIONS":
         return "", 200
 
     try:
-        data = request.get_json(force=True) or {}
 
-        product = str(data.get("product", "")).strip()
-        category = str(data.get("category", "")).strip()
+        data = request.get_json(
+            force=True
+        ) or {}
 
-        current_stock = int(data.get("current_stock", 0))
-        reorder_level = int(data.get("reorder_level", 0))
-        unit_price = float(data.get("unit_price", 0))
+        # ======================================
+        # READ DATA FROM FRONTEND
+        # ======================================
+
+        product = str(
+            data.get(
+                "product",
+                ""
+            )
+        ).strip()
+
+        category = str(
+            data.get(
+                "category",
+                ""
+            )
+        ).strip()
+
+        current_stock = int(
+            data.get(
+                "current_stock",
+                0
+            )
+        )
+
+        reorder_level = int(
+            data.get(
+                "reorder_level",
+                0
+            )
+        )
+
+        unit_price = float(
+            data.get(
+                "unit_price",
+                0
+            )
+        )
+
+        # ======================================
+        # IMAGE URL
+        # ======================================
+
+        img_url = str(
+            data.get(
+                "img_url",
+                ""
+            )
+        ).strip()
+
+        # ======================================
+        # VALIDATION
+        # ======================================
 
         if not product:
-            return jsonify({"error": "Product name is required"}), 400
+
+            return jsonify({
+                "error": "Product name is required"
+            }), 400
 
         if not category:
-            return jsonify({"error": "Category is required"}), 400
 
-        inventory_value = current_stock * unit_price
-        status = "Low Stock" if current_stock <= reorder_level else "In Stock"
+            return jsonify({
+                "error": "Category is required"
+            }), 400
+
+        # ======================================
+        # CALCULATE VALUES
+        # ======================================
+
+        inventory_value = (
+            current_stock * unit_price
+        )
+
+        if current_stock <= reorder_level:
+            status = "Low Stock"
+        else:
+            status = "In Stock"
+
+        # ======================================
+        # CSV COLUMNS
+        # ======================================
 
         fieldnames = [
-            "product_id", "product", "category", "current_stock",
-            "reorder_level", "unit_price", "inventory_value", "status"
+
+            "product_id",
+
+            "product",
+
+            "category",
+
+            "current_stock",
+
+            "reorder_level",
+
+            "unit_price",
+
+            "inventory_value",
+
+            "status",
+
+            "img_url"
         ]
 
+        # ======================================
+        # READ EXISTING CSV
+        # ======================================
+
         rows = []
+
         if os.path.exists(CSV_FILE):
-            with open(CSV_FILE, "r", encoding="utf-8", newline="") as file:
+
+            with open(
+                CSV_FILE,
+                "r",
+                encoding="utf-8",
+                newline=""
+            ) as file:
+
                 reader = csv.DictReader(file)
-                rows = [r for r in list(reader) if r.get("product_id")]
+
+                rows = [
+                    row
+                    for row in list(reader)
+                    if row.get("product_id")
+                ]
+
+        # ======================================
+        # CLEAN EXISTING ROWS
+        # ======================================
 
         clean_rows = []
+
         for row in rows:
-            stock = int(float(row.get("current_stock", 0)))
-            reorder = int(float(row.get("reorder_level", 0)))
-            row_status = "Low Stock" if stock <= reorder else "In Stock"
+
+            try:
+
+                stock = int(
+                    float(
+                        row.get(
+                            "current_stock",
+                            0
+                        ) or 0
+                    )
+                )
+
+            except:
+
+                stock = 0
+
+            try:
+
+                reorder = int(
+                    float(
+                        row.get(
+                            "reorder_level",
+                            0
+                        ) or 0
+                    )
+                )
+
+            except:
+
+                reorder = 0
+
+            try:
+
+                price = float(
+                    row.get(
+                        "unit_price",
+                        0
+                    ) or 0
+                )
+
+            except:
+
+                price = 0
+
+            try:
+
+                inventory_value_existing = float(
+                    row.get(
+                        "inventory_value",
+                        stock * price
+                    ) or 0
+                )
+
+            except:
+
+                inventory_value_existing = (
+                    stock * price
+                )
+
+            # Recalculate status
+            if stock <= reorder:
+                row_status = "Low Stock"
+            else:
+                row_status = "In Stock"
 
             clean_rows.append({
-                "product_id": row.get("product_id", ""),
-                "product": row.get("product", ""),
-                "category": row.get("category", ""),
+
+                "product_id": row.get(
+                    "product_id",
+                    ""
+                ),
+
+                "product": row.get(
+                    "product",
+                    ""
+                ),
+
+                "category": row.get(
+                    "category",
+                    ""
+                ),
+
                 "current_stock": stock,
+
                 "reorder_level": reorder,
-                "unit_price": float(row.get("unit_price", 0)),
-                "inventory_value": float(row.get("inventory_value", 0)),
-                "status": row_status
+
+                "unit_price": price,
+
+                "inventory_value": (
+                    inventory_value_existing
+                ),
+
+                "status": row_status,
+
+                # Preserve existing image URL
+                "img_url": row.get(
+                    "img_url",
+                    ""
+                )
             })
 
-        new_id = max([int(r["product_id"]) for r in clean_rows], default=0) + 1
+        # ======================================
+        # CREATE NEW PRODUCT ID
+        # ======================================
+
+        new_id = max(
+            [
+                int(row["product_id"])
+                for row in clean_rows
+                if row.get("product_id")
+            ],
+            default=0
+        ) + 1
+
+        # ======================================
+        # CREATE NEW PRODUCT
+        # ======================================
 
         new_product = {
+
             "product_id": new_id,
+
             "product": product,
+
             "category": category,
+
             "current_stock": current_stock,
+
             "reorder_level": reorder_level,
+
             "unit_price": unit_price,
+
             "inventory_value": inventory_value,
-            "status": status
+
+            "status": status,
+
+            "img_url": img_url
         }
 
-        clean_rows.append(new_product)
+        clean_rows.append(
+            new_product
+        )
 
-        with open(CSV_FILE, "w", encoding="utf-8", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+        # ======================================
+        # WRITE CSV
+        # ======================================
+
+        with open(
+            CSV_FILE,
+            "w",
+            encoding="utf-8",
+            newline=""
+        ) as file:
+
+            writer = csv.DictWriter(
+                file,
+                fieldnames=fieldnames
+            )
+
             writer.writeheader()
-            writer.writerows(clean_rows)
+
+            writer.writerows(
+                clean_rows
+            )
+
+        # ======================================
+        # RESPONSE
+        # ======================================
 
         return jsonify({
-            "message": "Product added successfully",
-            "product": new_product
+
+            "message":
+                "Product added successfully",
+
+            "product":
+                new_product
+
         }), 201
 
     except Exception as error:
-        return jsonify({"error": str(error)}), 500
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
 # ==========================================
 # UPDATE PRODUCT
 # ==========================================
 
-@app.route("/api/products/<int:product_id>", methods=["PUT", "OPTIONS"])
+@app.route(
+    "/api/products/<int:product_id>",
+    methods=["PUT", "OPTIONS"]
+)
 def update_product(product_id):
+
+    # Handle CORS preflight
     if request.method == "OPTIONS":
         return "", 200
 
     try:
-        data = request.get_json(force=True) or {}
 
-        product = str(data.get("product", "")).strip()
-        category = str(data.get("category", "")).strip()
-        current_stock = int(data.get("current_stock", 0))
-        reorder_level = int(data.get("reorder_level", 0))
-        unit_price = float(data.get("unit_price", 0))
+        data = request.get_json(
+            force=True
+        ) or {}
 
-        inventory_value = current_stock * unit_price
-        status = "Low Stock" if current_stock <= reorder_level else "In Stock"
+        # ======================================
+        # READ DATA
+        # ======================================
+
+        product = str(
+            data.get(
+                "product",
+                ""
+            )
+        ).strip()
+
+        category = str(
+            data.get(
+                "category",
+                ""
+            )
+        ).strip()
+
+        current_stock = int(
+            data.get(
+                "current_stock",
+                0
+            )
+        )
+
+        reorder_level = int(
+            data.get(
+                "reorder_level",
+                0
+            )
+        )
+
+        unit_price = float(
+            data.get(
+                "unit_price",
+                0
+            )
+        )
+
+        # ======================================
+        # IMAGE URL
+        # ======================================
+
+        img_url = str(
+            data.get(
+                "img_url",
+                ""
+            )
+        ).strip()
+
+        # ======================================
+        # CALCULATE VALUES
+        # ======================================
+
+        inventory_value = (
+            current_stock * unit_price
+        )
+
+        if current_stock <= reorder_level:
+            status = "Low Stock"
+        else:
+            status = "In Stock"
+
+        # ======================================
+        # READ CSV
+        # ======================================
 
         rows = []
+
         if os.path.exists(CSV_FILE):
-            with open(CSV_FILE, "r", encoding="utf-8", newline="") as file:
+
+            with open(
+                CSV_FILE,
+                "r",
+                encoding="utf-8",
+                newline=""
+            ) as file:
+
                 reader = csv.DictReader(file)
+
                 rows = list(reader)
 
+        # ======================================
+        # FIND PRODUCT
+        # ======================================
+
         product_found = False
+
         for row in rows:
-            if row.get("product_id") and int(row["product_id"]) == product_id:
+
+            if (
+                row.get("product_id")
+                and int(row["product_id"])
+                == product_id
+            ):
+
                 row["product"] = product
+
                 row["category"] = category
-                row["current_stock"] = current_stock
-                row["reorder_level"] = reorder_level
-                row["unit_price"] = unit_price
-                row["inventory_value"] = inventory_value
+
+                row["current_stock"] = (
+                    current_stock
+                )
+
+                row["reorder_level"] = (
+                    reorder_level
+                )
+
+                row["unit_price"] = (
+                    unit_price
+                )
+
+                row["inventory_value"] = (
+                    inventory_value
+                )
+
                 row["status"] = status
+
+                # ==================================
+                # SAVE IMAGE URL
+                # ==================================
+
+                row["img_url"] = img_url
+
                 product_found = True
+
                 break
 
+        # ======================================
+        # PRODUCT NOT FOUND
+        # ======================================
+
         if not product_found:
-            return jsonify({"error": "Product not found"}), 404
+
+            return jsonify({
+                "error": "Product not found"
+            }), 404
+
+        # ======================================
+        # CSV COLUMNS
+        # ======================================
 
         fieldnames = [
-            "product_id", "product", "category", "current_stock",
-            "reorder_level", "unit_price", "inventory_value", "status"
+
+            "product_id",
+
+            "product",
+
+            "category",
+
+            "current_stock",
+
+            "reorder_level",
+
+            "unit_price",
+
+            "inventory_value",
+
+            "status",
+
+            "img_url"
         ]
 
-        clean_rows = [r for r in rows if r.get("product_id")]
+        # ======================================
+        # REMOVE EMPTY ROWS
+        # ======================================
 
-        with open(CSV_FILE, "w", encoding="utf-8", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+        clean_rows = [
+
+            row
+            for row in rows
+            if row.get("product_id")
+        ]
+
+        # ======================================
+        # WRITE CSV
+        # ======================================
+
+        with open(
+            CSV_FILE,
+            "w",
+            encoding="utf-8",
+            newline=""
+        ) as file:
+
+            writer = csv.DictWriter(
+                file,
+                fieldnames=fieldnames
+            )
+
             writer.writeheader()
-            writer.writerows(clean_rows)
 
-        return jsonify({"message": "Product updated successfully"})
+            # Make sure every row has img_url
+            for row in clean_rows:
+
+                if "img_url" not in row:
+                    row["img_url"] = ""
+
+            writer.writerows(
+                clean_rows
+            )
+
+        # ======================================
+        # RESPONSE
+        # ======================================
+
+        return jsonify({
+
+            "message":
+                "Product updated successfully",
+
+            "product": {
+
+                "product_id":
+                    product_id,
+
+                "product":
+                    product,
+
+                "category":
+                    category,
+
+                "current_stock":
+                    current_stock,
+
+                "reorder_level":
+                    reorder_level,
+
+                "unit_price":
+                    unit_price,
+
+                "inventory_value":
+                    inventory_value,
+
+                "status":
+                    status,
+
+                "img_url":
+                    img_url
+            }
+
+        })
 
     except Exception as error:
-        return jsonify({"error": str(error)}), 500
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
 # ==========================================
 # DELETE PRODUCT
 # ==========================================
 
-@app.route("/api/products/<int:product_id>", methods=["DELETE", "OPTIONS"])
+@app.route(
+    "/api/products/<int:product_id>",
+    methods=["DELETE", "OPTIONS"]
+)
 def delete_product(product_id):
+
+    # Handle CORS preflight
     if request.method == "OPTIONS":
         return "", 200
 
     try:
+
         rows = []
+
         if os.path.exists(CSV_FILE):
-            with open(CSV_FILE, "r", encoding="utf-8", newline="") as file:
+
+            with open(
+                CSV_FILE,
+                "r",
+                encoding="utf-8",
+                newline=""
+            ) as file:
+
                 reader = csv.DictReader(file)
+
                 rows = list(reader)
 
+        # ======================================
+        # CHECK PRODUCT
+        # ======================================
+
         product_found = any(
-            row.get("product_id") and int(row["product_id"]) == product_id
+
+            row.get("product_id")
+            and int(row["product_id"])
+            == product_id
+
             for row in rows
         )
 
         if not product_found:
-            return jsonify({"error": "Product not found"}), 404
+
+            return jsonify({
+                "error": "Product not found"
+            }), 404
+
+        # ======================================
+        # REMOVE PRODUCT
+        # ======================================
 
         rows = [
-            row for row in rows
-            if not row.get("product_id") or int(row["product_id"]) != product_id
+
+            row
+            for row in rows
+
+            if not row.get("product_id")
+            or int(row["product_id"])
+            != product_id
         ]
+
+        # ======================================
+        # CSV COLUMNS
+        # ======================================
 
         fieldnames = [
-            "product_id", "product", "category", "current_stock",
-            "reorder_level", "unit_price", "inventory_value", "status"
+
+            "product_id",
+
+            "product",
+
+            "category",
+
+            "current_stock",
+
+            "reorder_level",
+
+            "unit_price",
+
+            "inventory_value",
+
+            "status",
+
+            "img_url"
         ]
 
-        with open(CSV_FILE, "w", encoding="utf-8", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
+        # ======================================
+        # WRITE CSV
+        # ======================================
 
-        return jsonify({"message": "Product deleted successfully"})
+        with open(
+            CSV_FILE,
+            "w",
+            encoding="utf-8",
+            newline=""
+        ) as file:
+
+            writer = csv.DictWriter(
+                file,
+                fieldnames=fieldnames
+            )
+
+            writer.writeheader()
+
+            for row in rows:
+
+                if "img_url" not in row:
+                    row["img_url"] = ""
+
+            writer.writerows(
+                rows
+            )
+
+        return jsonify({
+
+            "message":
+                "Product deleted successfully"
+
+        })
 
     except Exception as error:
-        return jsonify({"error": str(error)}), 500
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
 # ==========================================
 # DASHBOARD
 # ==========================================
 
-@app.route("/api/dashboard", methods=["GET"])
+@app.route(
+    "/api/dashboard",
+    methods=["GET"]
+)
 def dashboard():
-    try:
-        inventory = []
-        if os.path.exists(CSV_FILE):
-            with open(CSV_FILE, "r", encoding="utf-8", newline="") as file:
-                inventory = [r for r in list(csv.DictReader(file)) if r.get("product_id")]
 
-        total_products = len(inventory)
+    try:
+
+        # ======================================
+        # READ INVENTORY
+        # ======================================
+
+        inventory = []
+
+        if os.path.exists(CSV_FILE):
+
+            with open(
+                CSV_FILE,
+                "r",
+                encoding="utf-8",
+                newline=""
+            ) as file:
+
+                inventory = [
+
+                    row
+                    for row in list(
+                        csv.DictReader(file)
+                    )
+
+                    if row.get("product_id")
+                ]
+
+        # ======================================
+        # TOTAL PRODUCTS
+        # ======================================
+
+        total_products = len(
+            inventory
+        )
+
+        # ======================================
+        # LOW STOCK
+        # ======================================
+
         low_stock_products = []
 
         for item in inventory:
-            current_stock = int(float(item.get("current_stock", 0)))
-            reorder_level = int(float(item.get("reorder_level", 0)))
+
+            current_stock = int(
+                float(
+                    item.get(
+                        "current_stock",
+                        0
+                    ) or 0
+                )
+            )
+
+            reorder_level = int(
+                float(
+                    item.get(
+                        "reorder_level",
+                        0
+                    ) or 0
+                )
+            )
+
             if current_stock <= reorder_level:
+
                 low_stock_products.append({
-                    "product": item.get("product", ""),
-                    "stock": current_stock,
-                    "reorder_level": reorder_level
+
+                    "product":
+                        item.get(
+                            "product",
+                            ""
+                        ),
+
+                    "stock":
+                        current_stock,
+
+                    "reorder_level":
+                        reorder_level
                 })
 
-        total_inventory_value = sum(float(i.get("inventory_value", 0)) for i in inventory)
+        # ======================================
+        # INVENTORY VALUE
+        # ======================================
+
+        total_inventory_value = sum(
+
+            float(
+                item.get(
+                    "inventory_value",
+                    0
+                ) or 0
+            )
+
+            for item in inventory
+        )
+
+        # ======================================
+        # READ SALES CSV
+        # ======================================
 
         sales = []
+
         if os.path.exists(SALES_FILE):
-            with open(SALES_FILE, "r", encoding="utf-8", newline="") as file:
-                sales = [r for r in list(csv.DictReader(file)) if r.get("transaction_id")]
+
+            with open(
+                SALES_FILE,
+                "r",
+                encoding="utf-8",
+                newline=""
+            ) as file:
+
+                sales = [
+
+                    row
+                    for row in list(
+                        csv.DictReader(file)
+                    )
+
+                    if row.get(
+                        "transaction_id"
+                    )
+                ]
+
+        # ======================================
+        # TOTAL SALES
+        # ======================================
 
         total_sales = 0
+
         for sale in sales:
-            quantity = float(sale.get("quantity", 0))
-            unit_price = float(sale.get("unit_price", 0))
-            discount = float(sale.get("discount_percent", 0) or 0)
-            sale_value = quantity * unit_price
-            discount_amount = (sale_value * discount) / 100
-            total_sales += (sale_value - discount_amount)
+
+            quantity = float(
+                sale.get(
+                    "quantity",
+                    0
+                ) or 0
+            )
+
+            unit_price = float(
+                sale.get(
+                    "unit_price",
+                    0
+                ) or 0
+            )
+
+            discount = float(
+                sale.get(
+                    "discount_percent",
+                    0
+                ) or 0
+            )
+
+            sale_value = (
+                quantity * unit_price
+            )
+
+            discount_amount = (
+                sale_value * discount / 100
+            )
+
+            total_sales += (
+                sale_value
+                - discount_amount
+            )
+
+        # Inventory stock grouped by category
+        category_stock = {}
+
+        for item in inventory:
+            category = item.get("category", "Unknown")
+
+            try:
+                stock = int(float(item.get("current_stock", 0)))
+            except (ValueError, TypeError):
+                stock = 0
+
+            if category not in category_stock:
+                category_stock[category] = 0
+
+            category_stock[category] += stock
+
+        inventory_by_category = [
+            {
+                "category": category,
+                "stock": stock
+            }
+            for category, stock in category_stock.items()
+        ]
+
+        # ======================================
+        # RESPONSE
+        # ======================================
 
         return jsonify({
-            "total_products": total_products,
-            "low_stock": len(low_stock_products),
-            "total_inventory_value": total_inventory_value,
-            "total_sales": total_sales,
-            "low_stock_products": low_stock_products
+
+            "total_products":
+                total_products,
+
+            "low_stock":
+                len(low_stock_products),
+
+            "total_inventory_value":
+                total_inventory_value,
+
+            "total_sales":
+                total_sales,
+
+            "low_stock_products":
+                low_stock_products,
+
+            "inventory_by_category": inventory_by_category
+
         })
 
     except Exception as error:
-        return jsonify({"error": str(error)}), 500
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
 # ==========================================
@@ -878,4 +1145,8 @@ def dashboard():
 # ==========================================
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+
+    app.run(
+        debug=True,
+        port=5000
+    )
