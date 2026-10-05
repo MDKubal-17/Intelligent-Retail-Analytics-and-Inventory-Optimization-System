@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { loadSalesData } from "../utils/loadSalesData";
+
 import SalesKpiCard from "../components/SalesKpiCard";
 import RevenueChart from "../components/RevenueChart";
 import TopProducts from "../components/TopProducts";
 import CategorySales from "../components/CategorySales";
+import TransactionTable from "../components/TransactionTable";
 
 function Sales() {
   const [sales, setSales] = useState([]);
@@ -19,7 +21,10 @@ function Sales() {
       });
   }, []);
 
-  // Calculate values from CSV
+  // ================================
+  // SALES CALCULATIONS
+  // ================================
+
   const totalRevenue = sales.reduce(
     (total, sale) => total + Number(sale.revenue || 0),
     0
@@ -38,7 +43,12 @@ function Sales() {
   return (
     <Layout>
 
+      {/* ================================
+          PAGE HEADER
+      ================================= */}
+
       <div className="mb-6">
+
         <h1 className="text-3xl font-bold">
           Sales Analytics
         </h1>
@@ -46,9 +56,13 @@ function Sales() {
         <p className="text-gray-500 mt-1">
           Monitor sales performance and revenue trends
         </p>
+
       </div>
 
-      {/* KPI Cards */}
+
+      {/* ================================
+          SALES KPI CARDS
+      ================================= */}
 
       <div className="grid grid-cols-4 gap-6">
 
@@ -88,21 +102,36 @@ function Sales() {
 
       </div>
 
-      {/* Revenue Chart */}
+
+      {/* ================================
+          REVENUE CHART
+      ================================= */}
 
       <div className="mt-8">
-        <div className="mt-8">
-          <RevenueChart sales={sales} />
-        </div>
 
-        <div className="grid grid-cols-2 gap-6 mt-8">
+        <RevenueChart sales={sales} />
 
-          <TopProducts sales={sales} />
-
-          <CategorySales sales={sales} />
-
-        </div>
       </div>
+
+
+      {/* ================================
+          PRODUCT + CATEGORY SALES
+      ================================= */}
+
+      <div className="grid grid-cols-2 gap-6 mt-8">
+
+        <TopProducts sales={sales} />
+
+        <CategorySales sales={sales} />
+
+      </div>
+
+
+      {/* ================================
+          TRANSACTIONS
+      ================================= */}
+
+      <TransactionTable />
 
     </Layout>
   );
