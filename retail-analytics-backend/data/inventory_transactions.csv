@@ -1,0 +1,4 @@
+transaction_id,date,product_id,product,action,quantity,quantity_change,reason
+ITXN20261002100149379068,2026-10-02 10:01:49,3,Office Chair,sell,1,-1,Customer sale
+ITXN20261002100329132717,2026-10-02 10:03:29,9,Headphones,sell,1,-1,Customer sale
+ITXN20261002193029791282,2026-10-02 19:30:29,1,Wireless Mouse,damaged,5,-5,"Not working -3, Boxes are damaged -2"
