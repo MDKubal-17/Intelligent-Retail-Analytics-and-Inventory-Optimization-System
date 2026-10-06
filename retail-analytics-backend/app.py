@@ -6,8 +6,20 @@ import joblib
 import pandas as pd
 from datetime import datetime
 from chronos import Chronos2Pipeline
+from google import genai
+from dotenv import load_dotenv
+from google.genai import types
 
+load_dotenv()
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if GEMINI_API_KEY:
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    print("Gemini AI assistant enabled.")
+else:
+    client = None
+    print("WARNING: GEMINI_API_KEY not found.")
 # ============================================================
 # FLASK APP
 # ============================================================
@@ -2660,6 +2672,293 @@ def forecast():
 
         }), 500
 
+# ============================================================
+# AI INVENTORY INTELLIGENCE
+# ============================================================
+
+@app.route(
+    "/api/ai/inventory-query",
+    methods=["POST", "OPTIONS"]
+)
+def ai_inventory_query():
+
+    if request.method == "OPTIONS":
+        return "", 200
+
+    try:
+
+        # ----------------------------------------------------
+        # CHECK AI CONFIGURATION
+        # ----------------------------------------------------
+
+        if client is None:
+
+            return jsonify({
+                "error":
+                    "AI assistant is not configured. "
+                    "Please set GEMINI_API_KEY."
+            }), 500
+
+        # ----------------------------------------------------
+        # GET USER QUESTION
+        # ----------------------------------------------------
+
+        data = request.get_json(force=True) or {}
+
+        question = str(
+            data.get("question", "")
+        ).strip()
+
+        if not question:
+
+            return jsonify({
+                "error":
+                    "Please enter a question."
+            }), 400
+
+        # ----------------------------------------------------
+        # LOAD INVENTORY
+        # ----------------------------------------------------
+
+        inventory = read_inventory()
+
+        if not inventory:
+
+            return jsonify({
+                "error":
+                    "Inventory data is empty."
+            }), 404
+
+        # ----------------------------------------------------
+        # LOAD SALES
+        # ----------------------------------------------------
+
+        sales = read_sales()
+
+        # ----------------------------------------------------
+        # PREPARE INVENTORY ANALYTICS
+        # ----------------------------------------------------
+
+        inventory_context = []
+
+        for item in inventory:
+
+            stock = safe_int(
+                item.get("current_stock", 0)
+            )
+
+            reorder_level = safe_int(
+                item.get("reorder_level", 0)
+            )
+
+            unit_price = safe_float(
+                item.get("unit_price", 0)
+            )
+
+            inventory_context.append({
+
+                "product_id":
+                    safe_int(
+                        item.get("product_id")
+                    ),
+
+                "product":
+                    item.get("product", ""),
+
+                "category":
+                    item.get("category", ""),
+
+                "current_stock":
+                    stock,
+
+                "reorder_level":
+                    reorder_level,
+
+                "unit_price":
+                    unit_price,
+
+                "inventory_value":
+                    round(
+                        stock * unit_price,
+                        2
+                    ),
+
+                "stock_status":
+                    (
+                        "LOW"
+                        if stock <= reorder_level
+                        else "HEALTHY"
+                    )
+            })
+
+        # ----------------------------------------------------
+        # SALES ANALYTICS
+        # ----------------------------------------------------
+
+        sales_summary = {}
+
+        for sale in sales:
+
+            product_id = safe_int(
+                sale.get("product_id")
+            )
+
+            quantity = safe_float(
+                sale.get("quantity", 0)
+            )
+
+            revenue = safe_float(
+                sale.get("revenue", 0)
+            )
+
+            if product_id not in sales_summary:
+
+                sales_summary[product_id] = {
+                    "units_sold": 0,
+                    "revenue": 0
+                }
+
+            sales_summary[
+                product_id
+            ]["units_sold"] += quantity
+
+            sales_summary[
+                product_id
+            ]["revenue"] += revenue
+
+        # ----------------------------------------------------
+        # COMBINE DATA
+        # ----------------------------------------------------
+
+        for item in inventory_context:
+
+            product_id = item["product_id"]
+
+            sales_info = sales_summary.get(
+                product_id,
+                {
+                    "units_sold": 0,
+                    "revenue": 0
+                }
+            )
+
+            item["total_units_sold"] = round(
+                sales_info["units_sold"],
+                2
+            )
+
+            item["total_revenue"] = round(
+                sales_info["revenue"],
+                2
+            )
+
+        # ----------------------------------------------------
+        # SYSTEM INSTRUCTIONS
+        # ----------------------------------------------------
+
+        system_prompt = """
+You are the AI Inventory Intelligence Assistant
+for an Intelligent Retail Analytics and Inventory
+Optimization System.
+
+Your job is to analyze the supplied REAL inventory
+and sales data and answer the user's question.
+
+IMPORTANT RULES:
+
+1. Only use information present in the supplied data.
+2. Never invent products, quantities, prices,
+   forecasts, or business facts.
+3. If the requested information is not available,
+   clearly say that it is not available.
+4. Give practical inventory recommendations when
+   the data supports them.
+5. Explain WHY a recommendation was made.
+6. Keep answers concise but useful.
+7. Use the product names from the data.
+8. When discussing low stock, compare current_stock
+   with reorder_level.
+9. Do not claim that an LLM prediction is a statistical
+   forecast.
+10. This is a retail inventory decision-support system,
+    not an autonomous purchasing system.
+
+Format answers clearly using short paragraphs,
+bullet points, and tables when useful.
+"""
+
+        # ----------------------------------------------------
+        # DATA CONTEXT
+        # ----------------------------------------------------
+
+        context = {
+            "inventory": inventory_context,
+            "total_products": len(inventory_context),
+            "total_sales_records": len(sales),
+            "sales_summary": sales_summary
+        }
+
+        # ----------------------------------------------------
+        # GEMINI REQUEST
+        # ----------------------------------------------------
+
+        response = client.models.generate_content(
+
+            model="gemini-3.1-flash-lite",
+
+            contents=(
+                "RETAIL DATA:\n"
+                + str(context)
+                + "\n\nUSER QUESTION:\n"
+                + question
+            ),
+
+            config=types.GenerateContentConfig(
+
+                system_instruction=system_prompt,
+
+                max_output_tokens=600,
+
+                temperature=0.2
+            )
+        )
+
+        answer = response.text
+
+        # ----------------------------------------------------
+        # RESPONSE
+        # ----------------------------------------------------
+
+        return jsonify({
+
+            "success": True,
+
+            "question":
+                question,
+
+            "answer":
+                answer,
+
+            "model":
+                "Gemini 2.5 Flash"
+
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "AI INVENTORY ERROR:",
+            error
+        )
+
+        return jsonify({
+
+            "success": False,
+
+            "error":
+                str(error)
+
+        }), 500
 
 # ============================================================
 # RUN SERVER
