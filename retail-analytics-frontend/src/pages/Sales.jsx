@@ -6,11 +6,10 @@ import SalesKpiCard from "../components/SalesKpiCard";
 import RevenueChart from "../components/RevenueChart";
 import TopProducts from "../components/TopProducts";
 import CategorySales from "../components/CategorySales";
-import TransactionTable from "../components/TransactionTable";
+import TransactionTable from "../components/Sales_TransactionTable";
 
 function Sales() {
   const [sales, setSales] = useState([]);
-
   useEffect(() => {
     loadSalesData()
       .then((data) => {
@@ -42,30 +41,24 @@ function Sales() {
 
   return (
     <Layout>
-
       {/* ================================
           PAGE HEADER
       ================================= */}
 
       <div className="mb-6">
-
         <h1 className="text-3xl font-bold">
           Sales Analytics
         </h1>
-
         <p className="text-gray-500 mt-1">
           Monitor sales performance and revenue trends
         </p>
 
       </div>
 
-
       {/* ================================
           SALES KPI CARDS
       ================================= */}
-
       <div className="grid grid-cols-4 gap-6">
-
         <SalesKpiCard
           title="Total Revenue"
           value={`₹${totalRevenue.toLocaleString("en-IN", {
@@ -74,14 +67,12 @@ function Sales() {
           change="Live CSV"
           color="text-blue-600"
         />
-
         <SalesKpiCard
           title="Total Orders"
           value={totalOrders.toLocaleString("en-IN")}
           change="Live CSV"
           color="text-green-600"
         />
-
         <SalesKpiCard
           title="Total Profit"
           value={`₹${totalProfit.toLocaleString("en-IN", {
@@ -90,7 +81,6 @@ function Sales() {
           change="Estimated"
           color="text-purple-600"
         />
-
         <SalesKpiCard
           title="Average Order Value"
           value={`₹${averageOrder.toLocaleString("en-IN", {
@@ -99,42 +89,30 @@ function Sales() {
           change="Calculated"
           color="text-orange-600"
         />
-
       </div>
-
 
       {/* ================================
           REVENUE CHART
       ================================= */}
 
       <div className="mt-8">
-
         <RevenueChart sales={sales} />
-
       </div>
-
-
       {/* ================================
           PRODUCT + CATEGORY SALES
       ================================= */}
 
       <div className="grid grid-cols-2 gap-6 mt-8">
-
         <TopProducts sales={sales} />
-
         <CategorySales sales={sales} />
-
       </div>
-
 
       {/* ================================
           TRANSACTIONS
       ================================= */}
 
       <TransactionTable />
-
     </Layout>
   );
 }
-
 export default Sales;
