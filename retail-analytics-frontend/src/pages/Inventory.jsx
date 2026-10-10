@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { loadInventoryData } from "../utils/loadInventoryData";
+import NewSale from "./NewSale";
 
 function Inventory() {
+
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -123,6 +125,12 @@ function Inventory() {
     setReason("");
     setShowActionModal(true);
   };
+
+  
+const handleSellClick = (product) => {
+  window.location.href = "/new-sale";
+};
+
 
   // ==========================================
   // CLOSE ACTION MODAL
@@ -272,6 +280,7 @@ function Inventory() {
   // ==========================================
 
   return (
+    
     <Layout>
 
       {/* ======================================
@@ -518,12 +527,7 @@ function Inventory() {
                       <div className="flex flex-wrap gap-2">
 
                         <button
-                          onClick={() =>
-                            openActionModal(
-                              item,
-                              "sell"
-                            )
-                          }
+                          onClick={() => {window.location.href = `/new-sale?productId=${encodeURIComponent(item.id)}`;}}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${getActionStyle(
                             "sell"
                           )}`}
@@ -953,6 +957,8 @@ function Inventory() {
       )}
 
     </Layout>
+
+    
   );
 }
 
