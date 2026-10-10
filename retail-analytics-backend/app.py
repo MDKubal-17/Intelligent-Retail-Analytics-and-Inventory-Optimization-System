@@ -9,6 +9,11 @@ from chronos import Chronos2Pipeline
 from google import genai
 from dotenv import load_dotenv
 from google.genai import types
+# from mlxtend.frequent_patterns import apriori, association_rules
+# from mlxtend.preprocessing import TransactionEncoder
+# import recommendationRoutes from "./routes/recommendationRoutes.js";
+import requests
+from urllib.parse import quote
 
 load_dotenv()
 
@@ -29,6 +34,14 @@ app = Flask(__name__)
 # CORS
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# ============================================================
+# RECOMMENDATION SERVICE CONNECTION
+# ============================================================
+
+RECOMMENDATION_API_URL = os.getenv(
+    "RECOMMENDATION_API_URL",
+    "http://127.0.0.1:8000"
+).rstrip("/")
 
 # ============================================================
 # PATHS
@@ -438,165 +451,59 @@ def read_sales():
 
     return sales
 
-
 def append_sale(
     product,
     quantity,
     unit_price,
-    discount_percent=0
+    discount_percent=0,
+    transaction_id=None
 ):
+    os.makedirs(DATA_DIR, exist_ok=True)
 
-    os.makedirs(
-        DATA_DIR,
-        exist_ok=True
-    )
+    # If this is a single-product sale, generate a new transaction ID.
+    # If this is a multi-product sale, use the shared transaction ID.
+    if transaction_id is None:
+        transaction_id = generate_transaction_id("TXN")
 
-    transaction_id = generate_transaction_id(
-        "TXN"
-    )
-
-    sale_date = datetime.now().strftime(
-        "%Y-%m-%d"
-    )
+    sale_date = datetime.now().strftime("%Y-%m-%d")
 
     quantity = safe_float(quantity)
     unit_price = safe_float(unit_price)
-    discount_percent = safe_float(
-        discount_percent
-    )
+    discount_percent = safe_float(discount_percent)
 
-    gross_amount = (
-        quantity * unit_price
-    )
-
-    discount_amount = (
-        gross_amount
-        * discount_percent
-        / 100
-    )
-
-    revenue = (
-        gross_amount
-        - discount_amount
-    )
-
-    # --------------------------------------------------------
-    # Read existing sales
-    # --------------------------------------------------------
+    gross_amount = quantity * unit_price
+    discount_amount = gross_amount * discount_percent / 100
+    revenue = gross_amount - discount_amount
 
     existing_sales = read_sales()
 
-    # --------------------------------------------------------
-    # Add new sale
-    # --------------------------------------------------------
-
     existing_sales.append({
-
         "date": sale_date,
-
-        "product_id": product[
-            "product_id"
-        ],
-
-        "product": product[
-            "product"
-        ],
-
-        "category": product[
-            "category"
-        ],
-
+        "product_id": product["product_id"],
+        "product": product["product"],
+        "category": product["category"],
         "quantity": quantity,
-
         "unit_price": unit_price,
-
-        "discount_percent":
-            discount_percent,
-
-        "revenue": round(
-            revenue,
-            2
-        ),
-
-        "transaction_id":
-            transaction_id
+        "discount_percent": discount_percent,
+        "revenue": round(revenue, 2),
+        "transaction_id": transaction_id
     })
 
-    # --------------------------------------------------------
-    # Rewrite using correct CSV structure
-    # --------------------------------------------------------
-
-    with open(
-        SALES_FILE,
-        "w",
-        encoding="utf-8",
-        newline=""
-    ) as file:
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=SALES_FIELDS
-        )
-
+    with open(SALES_FILE, "w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=SALES_FIELDS)
         writer.writeheader()
 
         for sale in existing_sales:
-
             writer.writerow({
-
-                "date":
-                    sale.get(
-                        "date",
-                        ""
-                    ),
-
-                "product_id":
-                    sale.get(
-                        "product_id",
-                        ""
-                    ),
-
-                "product":
-                    sale.get(
-                        "product",
-                        ""
-                    ),
-
-                "category":
-                    sale.get(
-                        "category",
-                        ""
-                    ),
-
-                "quantity":
-                    sale.get(
-                        "quantity",
-                        0
-                    ),
-
-                "unit_price":
-                    sale.get(
-                        "unit_price",
-                        0
-                    ),
-
-                "discount_percent":
-                    sale.get(
-                        "discount_percent",
-                        0
-                    ),
-
-                "revenue":
-                    sale.get(
-                        "revenue",
-                        0
-                    ),
-
-                "transaction_id":
-                    sale.get(
-                        "transaction_id",
-                        ""
-                    )
+                "date": sale.get("date", ""),
+                "product_id": sale.get("product_id", ""),
+                "product": sale.get("product", ""),
+                "category": sale.get("category", ""),
+                "quantity": sale.get("quantity", 0),
+                "unit_price": sale.get("unit_price", 0),
+                "discount_percent": sale.get("discount_percent", 0),
+                "revenue": sale.get("revenue", 0),
+                "transaction_id": sale.get("transaction_id", "")
             })
 
     return transaction_id, revenue
@@ -611,7 +518,8 @@ def add_inventory_transaction(
     action,
     quantity,
     quantity_change,
-    reason=""
+    reason="",
+    transaction_id=None
 ):
 
     os.makedirs(
@@ -1683,19 +1591,13 @@ def inventory_action():
         # → INVENTORY TRANSACTIONS CSV
         # ====================================================
 
-        inventory_transaction_id = (
-            add_inventory_transaction(
-
-                product=product,
-
-                action=action,
-
-                quantity=quantity,
-
-                quantity_change=
-                    quantity_change,
-
-                reason=reason
+        inventory_transaction_id = add_inventory_transaction(
+            product=product,
+            action=action,
+            quantity=quantity,
+            quantity_change=quantity_change,
+            reason=reason or (
+                "New Sale" if action == "sell" else action.capitalize()
             )
         )
 
@@ -1777,6 +1679,502 @@ def inventory_action():
 
         }), 500
 
+
+@app.route(
+    "/api/sales/create",
+    methods=["POST", "OPTIONS"]
+)
+def create_sale():
+
+    if request.method == "OPTIONS":
+        return "", 200
+
+    try:
+
+        data = (
+            request.get_json(force=True)
+            or {}
+        )
+
+        items = data.get("items", [])
+
+        # ----------------------------------------------------
+        # VALIDATE ITEMS
+        # ----------------------------------------------------
+
+        if not items or not isinstance(items, list):
+
+            return jsonify({
+                "error": "At least one product is required"
+            }), 400
+
+        # ----------------------------------------------------
+        # READ INVENTORY
+        # ----------------------------------------------------
+
+        inventory = read_inventory()
+
+        # ----------------------------------------------------
+        # VALIDATE ALL PRODUCTS FIRST
+        # ----------------------------------------------------
+        # Important:
+        # We validate everything BEFORE changing inventory.
+        # This prevents a half-completed transaction.
+        # ----------------------------------------------------
+
+        sale_items = []
+
+        for item in items:
+
+            product_id = safe_int(
+                item.get("product_id")
+            )
+
+            quantity = safe_int(
+                item.get("quantity", 0)
+            )
+
+            discount_percent = safe_float(
+                item.get(
+                    "discount_percent",
+                    0
+                )
+            )
+
+            if product_id is None:
+
+                return jsonify({
+                    "error": "Invalid product_id"
+                }), 400
+
+            if quantity <= 0:
+
+                return jsonify({
+                    "error":
+                        "Quantity must be greater than 0"
+                }), 400
+
+            # Find product
+            product = None
+
+            for inv_item in inventory:
+
+                if safe_int(
+                    inv_item["product_id"]
+                ) == product_id:
+
+                    product = inv_item
+                    break
+
+            if product is None:
+
+                return jsonify({
+                    "error":
+                        f"Product {product_id} not found"
+                }), 404
+
+            current_stock = safe_int(
+                product.get("current_stock")
+            )
+
+            if quantity > current_stock:
+
+                return jsonify({
+                    "error":
+                        f"Insufficient stock for "
+                        f"{product.get('product')}. "
+                        f"Available: {current_stock}"
+                }), 400
+
+            unit_price = safe_float(
+                product.get("unit_price")
+            )
+
+            # Calculate revenue
+            gross_amount = (
+                quantity * unit_price
+            )
+
+            discount_amount = (
+                gross_amount
+                * discount_percent
+                / 100
+            )
+
+            revenue = (
+                gross_amount
+                - discount_amount
+            )
+
+            sale_items.append({
+
+                "product": product,
+
+                "product_id": product_id,
+
+                "quantity": quantity,
+
+                "unit_price": unit_price,
+
+                "discount_percent":
+                    discount_percent,
+
+                "revenue": revenue
+            })
+
+        # ----------------------------------------------------
+        # CREATE ONE TRANSACTION ID
+        # ----------------------------------------------------
+
+        import uuid
+
+        transaction_id = (
+            "TXN-"
+            + uuid.uuid4().hex[:8].upper()
+        )
+
+        total_revenue = 0
+
+        # ----------------------------------------------------
+        # PROCESS EACH PRODUCT
+        # ----------------------------------------------------
+
+        for item in sale_items:
+
+            product = item["product"]
+
+            quantity = item["quantity"]
+
+            quantity_change = -quantity
+
+            current_stock = safe_int(
+                product.get("current_stock")
+            )
+
+            reorder_level = safe_int(
+                product.get("reorder_level")
+            )
+
+            unit_price = item["unit_price"]
+
+            new_stock = (
+                current_stock
+                + quantity_change
+            )
+
+            new_inventory_value = (
+                new_stock
+                * unit_price
+            )
+
+            new_status = calculate_inventory_status(
+                new_stock,
+                reorder_level
+            )
+
+            # ----------------------------------------------
+            # UPDATE INVENTORY
+            # ----------------------------------------------
+
+            product.update({
+
+                "current_stock":
+                    str(new_stock),
+
+                "inventory_value":
+                    str(
+                        round(
+                            new_inventory_value,
+                            2
+                        )
+                    ),
+
+                "status":
+                    new_status
+            })
+
+            # ----------------------------------------------
+            # ADD SALES RECORD
+            # ----------------------------------------------
+
+            append_sale(
+
+                product=product,
+                quantity=quantity,
+                unit_price=unit_price,
+                discount_percent=
+                    item["discount_percent"],
+                transaction_id=
+                    transaction_id
+            )
+
+            # ----------------------------------------------
+            # ADD INVENTORY TRANSACTION
+            # ----------------------------------------------
+
+            add_inventory_transaction(
+                product=product, action="sell", quantity=quantity, quantity_change= quantity_change, reason="New Sale", transaction_id= transaction_id
+            )
+
+            total_revenue += item["revenue"]
+
+        # ----------------------------------------------------
+        # SAVE INVENTORY ONCE
+        # ----------------------------------------------------
+
+        write_inventory(
+            inventory
+        )
+
+        # ----------------------------------------------------
+        # RESPONSE
+        # ----------------------------------------------------
+
+        return jsonify({
+
+            "success": True,
+
+            "message":
+                "Sale completed successfully",
+
+            "transaction_id":
+                transaction_id,
+
+            "items": [
+
+                {
+                    "product_id":
+                        item["product_id"],
+
+                    "product":
+                        item["product"]["product"],
+
+                    "quantity":
+                        item["quantity"],
+
+                    "unit_price":
+                        item["unit_price"],
+
+                    "revenue":
+                        round(
+                            item["revenue"],
+                            2
+                        )
+                }
+
+                for item in sale_items
+            ],
+
+            "total_revenue":
+                round(
+                    total_revenue,
+                    2
+                )
+
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "CREATE SALE ERROR:",
+            error
+        )
+
+        return jsonify({
+
+            "success": False,
+
+            "error":
+                str(error)
+
+        }), 500
+
+
+
+
+
+
+@app.route("/api/recommendations/apriori", methods=["GET"])
+def apriori_recommendations():
+    try:
+        # Product IDs currently in the shopping basket
+        basket_ids = request.args.get("product_ids", "").strip()
+
+        if not basket_ids:
+            return jsonify({
+                "success": True,
+                "recommendations": [],
+                "message": "Add products to the basket to get recommendations."
+            }), 200
+
+        basket_ids = {
+            item.strip()
+            for item in basket_ids.split(",")
+            if item.strip()
+        }
+
+        sales = read_sales()
+
+        # Group products belonging to the same sale transaction
+        transactions = {}
+
+        for sale in sales:
+            transaction_id = str(
+                sale.get("transaction_id", "")
+            ).strip()
+
+            product_id = str(
+                sale.get("product_id", "")
+            ).strip()
+
+            if transaction_id and product_id:
+                transactions.setdefault(transaction_id, set()).add(
+                    product_id
+                )
+
+        transaction_list = [
+            list(products)
+            for products in transactions.values()
+            if products
+        ]
+
+        # Apriori needs historical transactions to discover patterns
+        if len(transaction_list) < 2:
+            return jsonify({
+                "success": True,
+                "recommendations": [],
+                "message": "Not enough sales history to learn product associations yet."
+            }), 200
+
+        encoder = TransactionEncoder()
+        encoded_array = encoder.fit(transaction_list).transform(
+            transaction_list
+        )
+
+        basket_df = pd.DataFrame(
+            encoded_array,
+            columns=encoder.columns_
+        )
+
+        # Lower support helps with smaller project datasets
+        frequent_itemsets = apriori(
+            basket_df,
+            min_support=0.01,
+            use_colnames=True
+        )
+
+        if frequent_itemsets.empty:
+            return jsonify({
+                "success": True,
+                "recommendations": [],
+                "message": "No frequent product combinations found yet."
+            }), 200
+
+        rules = association_rules(
+            frequent_itemsets,
+            metric="confidence",
+            min_threshold=0.1
+        )
+
+        if rules.empty:
+            return jsonify({
+                "success": True,
+                "recommendations": [],
+                "message": "No product association rules found yet."
+            }), 200
+
+        # Keep rules whose antecedent overlaps with the current basket
+        recommendations = {}
+
+        for _, rule in rules.iterrows():
+            antecedents = {
+                str(product) for product in rule["antecedents"]
+            }
+            consequents = {
+                str(product) for product in rule["consequents"]
+            }
+
+            if not antecedents.issubset(basket_ids):
+                continue
+
+            for product_id in consequents:
+                if product_id in basket_ids:
+                    continue
+
+                current = recommendations.get(product_id)
+
+                score = {
+                    "product_id": product_id,
+                    "confidence": round(float(rule["confidence"]), 4),
+                    "support": round(float(rule["support"]), 4),
+                    "lift": round(float(rule["lift"]), 4)
+                }
+
+                if current is None or score["confidence"] > current["confidence"]:
+                    recommendations[product_id] = score
+
+        # Match recommendations to actual products in the inventory
+        with open(CSV_FILE, "r", newline="", encoding="utf-8-sig") as file:
+            inventory = list(csv.DictReader(file))
+
+        inventory_by_id = {
+            str(item.get("product_id", item.get("id", ""))).strip(): item
+            for item in inventory
+        }
+
+        results = []
+
+        for product_id, metrics in recommendations.items():
+            product = inventory_by_id.get(product_id)
+
+            if not product:
+                continue
+
+            # Exclude products that are out of stock
+            try:
+                stock = float(
+                    product.get("current_stock", product.get("stock", 0)) or 0
+                )
+            except (TypeError, ValueError):
+                stock = 0
+
+            if stock <= 0:
+                continue
+
+            results.append({
+                "id": product_id,
+                "product": product.get("product", product.get("name", "")),
+                "category": product.get("category", ""),
+                "unit_price": float(
+                    product.get("unit_price", product.get("price", 0)) or 0
+                ),
+                "current_stock": stock,
+                "confidence": metrics["confidence"],
+                "support": metrics["support"],
+                "lift": metrics["lift"]
+            })
+
+        results.sort(
+            key=lambda item: (
+                item["lift"],
+                item["confidence"],
+                item["support"]
+            ),
+            reverse=True
+        )
+
+        return jsonify({
+            "success": True,
+            "recommendations": results[:5],
+            "transaction_count": len(transaction_list)
+        }), 200
+
+    except Exception as error:
+        app.logger.exception("Apriori recommendation error")
+        return jsonify({
+            "success": False,
+            "message": "Unable to generate product recommendations."
+        }), 500
 
 # ============================================================
 # DASHBOARD
@@ -2959,6 +3357,132 @@ bullet points, and tables when useful.
                 str(error)
 
         }), 500
+
+
+
+
+@app.route("/api/recommendations/apriori/debug", methods=["GET"])
+def debug_apriori():
+    sales = read_sales()
+    transactions = {}
+
+    for sale in sales:
+        tid = str(sale.get("transaction_id", "")).strip()
+        pid = str(sale.get("product_id", "")).strip()
+
+        if tid and pid:
+            transactions.setdefault(tid, set()).add(pid)
+
+    sizes = {}
+    for products in transactions.values():
+        count = len(products)
+        sizes[count] = sizes.get(count, 0) + 1
+
+    return jsonify({
+        "sales_rows": len(sales),
+        "unique_transactions": len(transactions),
+        "transactions_by_product_count": {
+            str(k): v for k, v in sorted(sizes.items())
+        },
+        "multi_product_transactions": sum(
+            1 for products in transactions.values()
+            if len(products) >= 2
+        ),
+        "sample_multi_product_transactions": [
+            {
+                "transaction_id": tid,
+                "product_ids": sorted(products)
+            }
+            for tid, products in transactions.items()
+            if len(products) >= 2
+        ][:10]
+    })
+
+
+
+# ============================================================
+# RECOMMENDATION SERVICE PROXY
+# Forwards requests from port 5000 to port 8000
+# ============================================================
+
+def forward_recommendation_request(endpoint, params=None):
+    """Forward a request to the separate recommendation service."""
+    try:
+        url = f"{RECOMMENDATION_API_URL}{endpoint}"
+
+        response = requests.get(
+            url,
+            params=params,
+            timeout=30
+        )
+
+        return app.response_class(
+            response=response.content,
+            status=response.status_code,
+            content_type=response.headers.get(
+                "Content-Type",
+                "application/json"
+            )
+        )
+
+    except requests.RequestException:
+        app.logger.exception(
+            "Recommendation service connection failed"
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "Recommendation service is unavailable",
+            "service_url": RECOMMENDATION_API_URL
+        }), 502
+
+
+@app.route(
+    "/api/recommendations/product/<product_id>",
+    methods=["GET"]
+)
+def proxy_similar_products(product_id):
+    """Get similar products from the recommendation service."""
+
+    endpoint = (
+        "/recommend/product/"
+        + quote(product_id, safe="")
+    )
+
+    params = {
+        "n": request.args.get("n", "5"),
+        "method": request.args.get("method", "ii_cf")
+    }
+
+    return forward_recommendation_request(
+        endpoint,
+        params=params
+    )
+
+
+@app.route(
+    "/api/recommendations/also-bought/<product_id>",
+    methods=["GET"]
+)
+def proxy_also_bought(product_id):
+    """Get customers-also-bought recommendations."""
+
+    endpoint = (
+        "/recommend/also-bought/"
+        + quote(product_id, safe="")
+    )
+
+    params = {
+        "n": request.args.get("n", "5")
+    }
+
+    return forward_recommendation_request(
+        endpoint,
+        params=params
+    )
+
+
+
 
 # ============================================================
 # RUN SERVER
