@@ -9,22 +9,11 @@ import Transaction from '../models/Transaction.js';
 
 const router = express.Router();
 
-// File: server/routes/inventoryRoutes.js
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Navigate up 2 levels to root-project, then into retail-analytics-backend/data/
-const CSV_PATH = path.resolve(
-	__dirname,
-	'../../retail-analytics-backend/data/inventory_data.csv'
-);
-
-const SALES_CSV_PATH = path.resolve(
-	__dirname,
-	'../../retail-analytics-backend/data/sales_data.csv'
-);
-
+// const CSV_PATH = "D:/Final_year_project/retail-analytics-backend/data/inventory_transactions.csv";
+const CSV_PATH = path.join(__dirname, '../../reatail-anaytics-backend/data/inventory_data.csv',);
+const TRANSACTIONS_CSV_PATH ="D:/Final_year_project/retail-analytics-backend/data/inventory_transactions.csv";
 // Helper function to calculate SHA-256 block hash
 function calculateHash(index, previousHash, timestamp, data) {
 	return crypto
@@ -33,7 +22,7 @@ function calculateHash(index, previousHash, timestamp, data) {
 		.digest('hex');
 }
 
-// Helper to look up Product Name from CSV matching exact headers
+// Helper to look up Product Name from CSV matching your exact headers
 function findProductNameFromCSV(productId) {
 	return new Promise((resolve) => {
 		if (!fs.existsSync(CSV_PATH)) {
@@ -47,6 +36,7 @@ function findProductNameFromCSV(productId) {
 		fs.createReadStream(CSV_PATH)
 			.pipe(csv())
 			.on('data', (row) => {
+				// Normalize keys (handles product_id, Product_ID, productId)
 				const rowIdKey = Object.keys(row).find(
 					(k) =>
 						k.trim().toLowerCase() === 'product_id' ||
@@ -75,39 +65,6 @@ function findProductNameFromCSV(productId) {
 			});
 	});
 }
-
-// GET: Serve raw inventory_data.csv for frontend charts
-router.get('/data/inventory', (req, res) => {
-	if (fs.existsSync(CSV_PATH)) {
-		res.setHeader('Content-Type', 'text/csv');
-		return res.sendFile(CSV_PATH);
-	}
-	return res
-		.status(404)
-		.json({ success: false, error: 'inventory_data.csv file not found' });
-});
-
-// GET: Serve raw inventory_data.csv for frontend charts
-router.get('/data/inventory', (req, res) => {
-	if (fs.existsSync(CSV_PATH)) {
-		res.setHeader('Content-Type', 'text/csv');
-		return res.sendFile(CSV_PATH);
-	}
-	return res
-		.status(404)
-		.json({ success: false, error: `inventory_data.csv not found at ${CSV_PATH}` });
-});
-
-// GET: Serve raw sales_data.csv for frontend charts
-router.get('/data/sales', (req, res) => {
-	if (fs.existsSync(SALES_CSV_PATH)) {
-		res.setHeader('Content-Type', 'text/csv');
-		return res.sendFile(SALES_CSV_PATH);
-	}
-	return res
-		.status(404)
-		.json({ success: false, error: `sales_data.csv not found at ${SALES_CSV_PATH}` });
-});
 
 // POST: Record stock change in MongoDB ledger & update CSV
 router.post('/update-stock', async (req, res) => {
@@ -250,5 +207,120 @@ router.post('/backfill-names', async (req, res) => {
 		res.status(500).json({ success: false, error: err.message });
 	}
 });
+
+
+router.post("/import-transactions-csv", async (req, res) => {
+  try {
+    if (!fs.existsSync(TRANSACTIONS_CSV_PATH)) {
+      return res.status(404).json({
+        success: false,
+        error: `CSV file not found: ${TRANSACTIONS_CSV_PATH}`,
+      });
+    }
+
+    const rows = await new Promise((resolve, reject) => {
+      const result = [];
+
+      fs.createReadStream(TRANSACTIONS_CSV_PATH)
+        .pipe(csv())
+        .on("data", (row) => result.push(row))
+        .on("end", () => resolve(result))
+        .on("error", reject);
+    });
+
+    let lastBlock = await Transaction.findOne().sort({ blockIndex: -1 });
+    let blockIndex = lastBlock ? lastBlock.blockIndex + 1 : 1;
+    let previousHash = lastBlock ? lastBlock.hash : "0";
+
+    let imported = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const transactionId = String(row.transaction_id || "").trim();
+      const productId = String(row.product_id || "").trim();
+      const productName = String(row.product || "").trim();
+      const quantityDelta = Number(row.quantity_change);
+      const reason = String(row.reason || row.action || "").trim();
+
+      if (
+        !transactionId ||
+        !productId ||
+        !productName ||
+        !Number.isFinite(quantityDelta) ||
+        !reason
+      ) {
+        skipped++;
+        continue;
+      }
+
+      // Avoid importing the same CSV transaction twice.
+      const existing = await Transaction.findOne({ transactionId });
+
+      if (existing) {
+        skipped++;
+        continue;
+      }
+
+      const timestamp = row.date
+        ? new Date(row.date).toISOString()
+        : new Date().toISOString();
+
+      const updatedBy = "CSV Import";
+
+      const data = {
+        productId,
+        productName,
+        quantityDelta,
+        reason,
+        updatedBy,
+      };
+
+      const hash = crypto
+        .createHash("sha256")
+        .update(
+          blockIndex +
+            previousHash +
+            timestamp +
+            JSON.stringify(data)
+        )
+        .digest("hex");
+
+      const transaction = new Transaction({
+        transactionId,
+        blockIndex,
+        timestamp,
+        productId,
+        productName,
+        quantityDelta,
+        reason,
+        updatedBy,
+        previousHash,
+        hash,
+      });
+
+      await transaction.save();
+
+      previousHash = hash;
+      blockIndex++;
+      imported++;
+    }
+
+    return res.json({
+      success: true,
+      message: "CSV transaction import completed.",
+      imported,
+      skipped,
+      totalRows: rows.length,
+    });
+  } catch (err) {
+    console.error("CSV transaction import failed:", err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
 
 export default router;
