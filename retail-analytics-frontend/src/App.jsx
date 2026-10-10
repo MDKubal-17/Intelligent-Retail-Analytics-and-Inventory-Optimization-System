@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
 // Layout
 import PageControls from './components/PageControls';
@@ -14,8 +14,9 @@ import Sales from './pages/Sales';
 import Transactions from "./pages/Transactions"; 
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import NewSale from './pages/NewSale';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://retail-backend-9qvb.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Inline Hook for background session pings
 function useAutoRefreshSession(intervalMs = 300000) {
@@ -59,6 +60,7 @@ function AppContent() {
           <Route path="/sales" element={<Sales />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/new-sale" element={<NewSale />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
