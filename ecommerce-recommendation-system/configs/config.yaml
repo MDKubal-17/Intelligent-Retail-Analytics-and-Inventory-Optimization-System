@@ -1,0 +1,73 @@
+# configs/config.yaml
+# ══════════════════════════════════════════════════════════════════
+#  Central configuration for the E-Commerce Recommendation System.
+#  Override any value with environment variables or CLI flags.
+# ══════════════════════════════════════════════════════════════════
+
+# ── Data paths ────────────────────────────────────────────────────
+paths:
+  raw_data:         "data/raw/ecommerce_data.csv"
+  clean_data:       "data/processed/clean_transactions.csv"
+  interaction_matrix: "data/processed/interaction_matrix.npz"
+  customer_encoder: "data/processed/customer_encoder.npy"
+  product_encoder:  "data/processed/product_encoder.npy"
+  model_dir:        "models/saved"
+
+# ── Dataset generation ────────────────────────────────────────────
+dataset:
+  n_customers:       1000
+  n_transactions:    25000
+  cancellation_rate: 0.05
+  seed:              42
+
+# ── Preprocessing ─────────────────────────────────────────────────
+preprocessing:
+  log_smoothing: true       # apply log(1 + x) to interaction scores
+  min_interactions: 2       # drop customers with fewer purchases
+
+# ── User-User Collaborative Filtering ────────────────────────────
+uu_cf:
+  top_k:      10
+  n_similar:  20            # number of similar users to aggregate
+
+# ── Item-Item Collaborative Filtering ─────────────────────────────
+ii_cf:
+  top_k:      10
+
+# ── ALS (Alternating Least Squares) ──────────────────────────────
+als:
+  factors:        64        # number of latent dimensions
+  iterations:     20        # training iterations
+  regularization: 0.01      # L2 regularisation weight
+  alpha:          40.0      # confidence scaling factor
+  top_k:          10
+
+# ── Association Rules (Apriori) ───────────────────────────────────
+apriori:
+  min_support:    0.01      # minimum transaction frequency
+  min_confidence: 0.10      # minimum conditional probability
+  min_lift:       1.0       # minimum lift (> 1 = positive association)
+  max_len:        4         # maximum itemset length
+
+# ── Hybrid model weights (ALS : UserUserCF : ItemItemCF) ──────────
+hybrid:
+  weights: [0.50, 0.30, 0.20]
+
+# ── Evaluation ────────────────────────────────────────────────────
+evaluation:
+  k_values:         [5, 10, 20]
+  test_fraction:    0.20
+  max_eval_users:   500
+  strategy:         "temporal"   # temporal | leave_one_out
+
+# ── API ───────────────────────────────────────────────────────────
+api:
+  host:            "0.0.0.0"
+  port:            8000
+  default_n_recs:  10
+  max_n_recs:      50
+
+# ── Streamlit UI ──────────────────────────────────────────────────
+ui:
+  page_title:      "ShopAI — Recommendation System"
+  api_base:        "http://localhost:8000"
