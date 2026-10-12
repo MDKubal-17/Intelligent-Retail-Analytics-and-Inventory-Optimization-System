@@ -1,0 +1,153 @@
+
+.purchase-orders-page {
+  padding: 24px;
+  color: var(--text-primary, #1f2937);
+}
+
+.purchase-orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.purchase-orders-header h1 {
+  margin: 0 0 8px;
+}
+
+.purchase-orders-header p,
+.po-panel > p {
+  color: var(--text-secondary, #6b7280);
+}
+
+.po-panel {
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  background: var(--card-background, #ffffff);
+}
+
+.po-panel h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.po-table-wrap {
+  overflow-x: auto;
+}
+
+.po-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+.po-table th,
+.po-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.po-table th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.po-table td small {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+}
+
+.po-table input,
+.po-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+}
+
+.po-table input {
+  width: 90px;
+}
+
+.po-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.po-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.po-total {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.po-total strong {
+  font-size: 1.25rem;
+}
+
+.po-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.po-status {
+  display: inline-block;
+  padding: 5px 9px;
+  background: #f3f4f6;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.po-error {
+  padding: 12px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.po-success {
+  padding: 12px;
+  color: #166534;
+  background: #f0fdf4;
+  border-radius: 8px;
+}
+
+.purchase-orders-page button {
+  cursor: pointer;
+  padding: 9px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.purchase-orders-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.po-form button[type="submit"] {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: white;
+}
