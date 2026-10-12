@@ -14,11 +14,14 @@ from google.genai import types
 # import recommendationRoutes from "./routes/recommendationRoutes.js";
 import requests
 from urllib.parse import quote
+import json
+import resend
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
+resend.api_key = os.getenv("RESEND_API_KEY")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL")
 if GEMINI_API_KEY:
     client = genai.Client(api_key=GEMINI_API_KEY)
     print("Gemini AI assistant enabled.")
@@ -2667,6 +2670,7 @@ def forecast():
         df = pd.read_csv(
             FORECAST_DATA_FILE
         )
+        df["date"] = pd.to_datetime(df["date"])
 
         if df.empty:
 
@@ -3000,12 +3004,13 @@ def forecast():
                 predictions
             ):
 
-                forecast_date = (
+                forecast_start_date = (pd.Timestamp.now().normalize()
+                    + pd.Timedelta(days=1)
+                )
 
-                    last_date
-                    + pd.Timedelta(
-                        days=index + 1
-                    )
+                forecast_date = (
+                    forecast_start_date
+                    + pd.Timedelta(days=index)
                 )
 
                 all_forecasts.append({
@@ -3042,7 +3047,8 @@ def forecast():
         # ----------------------------------------------------
         # RESPONSE
         # ----------------------------------------------------
-
+        print("Latest sales date:", df["date"].max())
+        print("Earliest sales date:", df["date"].min())
         return jsonify({
 
             "model":
@@ -3482,6 +3488,799 @@ def proxy_also_bought(product_id):
     )
 
 
+
+# ============================================================
+# HISTORICAL DAILY DEMAND FOR FORECAST GRAPH
+# ============================================================
+
+@app.route("/api/forecast/history", methods=["GET"])
+def forecast_history():
+    try:
+        product_id = request.args.get("product_id")
+
+        if not product_id:
+            return jsonify({
+                "error": "product_id is required"
+            }), 400
+
+        if not os.path.exists(FORECAST_DATA_FILE):
+            return jsonify({
+                "error": "Forecast dataset not found"
+            }), 404
+
+        df = pd.read_csv(FORECAST_DATA_FILE)
+
+        required_columns = [
+            "date", "product_id", "quantity"
+        ]
+
+        missing = [
+            col for col in required_columns
+            if col not in df.columns
+        ]
+
+        if missing:
+            return jsonify({
+                "error": "Missing required columns",
+                "missing_columns": missing
+            }), 400
+
+        df["product_id"] = (
+            df["product_id"].astype(str).str.strip()
+        )
+
+        df = df[
+            df["product_id"] == str(product_id).strip()
+        ].copy()
+
+        if df.empty:
+            return jsonify({"history": []}), 200
+
+        df["date"] = pd.to_datetime(
+            df["date"], errors="coerce"
+        )
+
+        df["quantity"] = pd.to_numeric(
+            df["quantity"], errors="coerce"
+        ).fillna(0)
+
+        df = df.dropna(subset=["date"])
+
+        # Combine multiple records for the same day.
+        daily = (
+            df.groupby(df["date"].dt.strftime("%Y-%m-%d"))
+            ["quantity"]
+            .sum()
+            .reset_index()
+        )
+
+        daily.columns = ["date", "actual_demand"]
+        daily = daily.sort_values("date").tail(30)
+
+        history = [
+            {
+                "date": row["date"],
+                "actual_demand": float(row["actual_demand"])
+            }
+            for _, row in daily.iterrows()
+        ]
+
+        return jsonify({"history": history}), 200
+
+    except Exception as error:
+        app.logger.exception("Historical demand error")
+        return jsonify({"error": str(error)}), 500
+
+
+
+# ============================================================
+# PURCHASE ORDER MANAGEMENT
+# Requires existing: app, DATA_DIR, forecast, read_inventory,
+# write_inventory, safe_int, safe_float,
+# calculate_inventory_status, add_inventory_transaction,
+# generate_transaction_id
+# ============================================================
+
+import csv
+import os
+import json
+import math
+from datetime import datetime
+from flask import request, jsonify
+
+
+# ---------------- CONFIGURATION ----------------
+
+PURCHASE_ORDERS_FILE = os.path.join(
+    DATA_DIR, "purchase_orders.csv"
+)
+
+PO_FIELDS = [
+    "order_id",
+    "created_at",
+    "updated_at",
+    "supplier_name",
+    "supplier_email",
+    "supplier_phone",
+    "status",
+    "items_json",
+    "total_cost",
+    "received_at",
+]
+
+
+# ---------------- INITIALIZE CSV ----------------
+
+def initialize_purchase_orders():
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+    if not os.path.exists(PURCHASE_ORDERS_FILE):
+        with open(
+            PURCHASE_ORDERS_FILE,
+            "w",
+            newline="",
+            encoding="utf-8"
+        ) as file:
+            writer = csv.DictWriter(
+                file,
+                fieldnames=PO_FIELDS
+            )
+            writer.writeheader()
+
+
+# ---------------- READ PURCHASE ORDERS ----------------
+
+def read_purchase_orders():
+    initialize_purchase_orders()
+    orders = []
+
+    with open(
+        PURCHASE_ORDERS_FILE,
+        "r",
+        newline="",
+        encoding="utf-8"
+    ) as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            try:
+                items = json.loads(
+                    row.get("items_json") or "[]"
+                )
+                if not isinstance(items, list):
+                    items = []
+            except (json.JSONDecodeError, TypeError):
+                items = []
+
+            row["items"] = items
+
+            try:
+                row["total_cost"] = float(
+                    row.get("total_cost") or 0
+                )
+            except (ValueError, TypeError):
+                row["total_cost"] = 0.0
+
+            orders.append(row)
+
+    return orders
+
+
+# ---------------- WRITE PURCHASE ORDERS ----------------
+
+def write_purchase_orders(orders):
+    initialize_purchase_orders()
+
+    temp_file = PURCHASE_ORDERS_FILE + ".tmp"
+
+    with open(
+        temp_file,
+        "w",
+        newline="",
+        encoding="utf-8"
+    ) as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=PO_FIELDS
+        )
+        writer.writeheader()
+
+        for order in orders:
+            items = order.get(
+                "items",
+                order.get("items_json", [])
+            )
+
+            if isinstance(items, str):
+                try:
+                    items = json.loads(items)
+                except (json.JSONDecodeError, TypeError):
+                    items = []
+
+            if not isinstance(items, list):
+                items = []
+
+            writer.writerow({
+                "order_id": order.get("order_id", ""),
+                "created_at": order.get("created_at", ""),
+                "updated_at": order.get("updated_at", ""),
+                "supplier_name": order.get("supplier_name", ""),
+                "supplier_email": order.get("supplier_email", ""),
+                "supplier_phone": order.get("supplier_phone", ""),
+                "status": order.get("status", "Draft"),
+                "items_json": json.dumps(items),
+                "total_cost": order.get("total_cost", 0),
+                "received_at": order.get("received_at", ""),
+            })
+
+    os.replace(temp_file, PURCHASE_ORDERS_FILE)
+
+
+# ---------------- FORECAST-BASED RECOMMENDATIONS ----------------
+
+@app.route(
+    "/api/purchase-orders/recommendations",
+    methods=["GET"]
+)
+def purchase_order_recommendations():
+    try:
+        # Reuse your existing forecast endpoint function.
+        forecast_result = forecast()
+
+        if isinstance(forecast_result, tuple):
+            response = forecast_result[0]
+            status_code = forecast_result[1]
+        else:
+            response = forecast_result
+            status_code = getattr(
+                response, "status_code", 200
+            )
+
+        if status_code >= 400:
+            details = (
+                response.get_json(silent=True)
+                if hasattr(response, "get_json")
+                else str(response)
+            )
+
+            return jsonify({
+                "error": "Unable to retrieve demand forecasts",
+                "details": details
+            }), status_code
+
+        if hasattr(response, "get_json"):
+            forecast_data = response.get_json(silent=True) or {}
+        elif isinstance(response, dict):
+            forecast_data = response
+        else:
+            return jsonify({
+                "error": "Unexpected response from forecast service"
+            }), 500
+
+        forecast_rows = forecast_data.get("forecasts", [])
+
+        if not isinstance(forecast_rows, list):
+            return jsonify({
+                "error": "Forecast data must contain a forecasts list"
+            }), 500
+
+        demand_by_product = {}
+
+        for row in forecast_rows:
+            product_id = safe_int(
+                row.get("product_id"), -1
+            )
+
+            if product_id < 0:
+                continue
+
+            demand = max(
+                0,
+                safe_float(row.get("predicted_demand"))
+            )
+
+            demand_by_product[product_id] = (
+                demand_by_product.get(product_id, 0) + demand
+            )
+
+        recommendations = []
+
+        for product in read_inventory():
+            product_id = safe_int(
+                product.get("product_id"), -1
+            )
+            stock = safe_int(product.get("current_stock"))
+            reorder_level = safe_int(
+                product.get("reorder_level")
+            )
+            unit_price = safe_float(
+                product.get("unit_price")
+            )
+
+            # Do not invent a zero forecast for missing products.
+            if product_id not in demand_by_product:
+                continue
+
+            forecast_demand = demand_by_product[product_id]
+
+            # Target = forecast demand + reorder-level buffer.
+            target_stock = math.ceil(
+                forecast_demand + reorder_level
+            )
+
+            suggested_quantity = max(
+                0,
+                target_stock - stock
+            )
+
+            if suggested_quantity <= 0:
+                continue
+
+            recommendations.append({
+                "product_id": product_id,
+                "product": product.get("product", ""),
+                "category": product.get("category", ""),
+                "current_stock": stock,
+                "reorder_level": reorder_level,
+                "forecast_demand_7d": round(
+                    forecast_demand, 2
+                ),
+                "suggested_quantity": suggested_quantity,
+                "unit_price": unit_price,
+                "estimated_cost": round(
+                    suggested_quantity * unit_price, 2
+                ),
+                "reason": (
+                    f"Current stock is {stock}; target stock is "
+                    f"{target_stock}, based on forecast demand "
+                    f"and the reorder-level buffer."
+                )
+            })
+
+        recommendations.sort(
+            key=lambda item: item["estimated_cost"],
+            reverse=True
+        )
+
+        return jsonify({
+            "forecast_model": forecast_data.get(
+                "model", "Existing forecast service"
+            ),
+            "recommendations": recommendations
+        }), 200
+
+    except Exception as error:
+        app.logger.exception(
+            "Purchase-order recommendation failed"
+        )
+        return jsonify({"error": str(error)}), 500
+
+
+# ---------------- LIST AND CREATE PURCHASE ORDERS ----------------
+
+@app.route(
+    "/api/purchase-orders",
+    methods=["GET", "POST"]
+)
+def purchase_orders():
+    if request.method == "GET":
+        return jsonify({
+            "purchase_orders": read_purchase_orders()
+        }), 200
+
+    try:
+        data = request.get_json(silent=True) or {}
+
+        supplier_name = str(
+            data.get("supplier_name", "")
+        ).strip()
+
+        if not supplier_name:
+            return jsonify({
+                "error": "Supplier name is required"
+            }), 400
+
+        submitted_items = data.get("items", [])
+
+        if (
+            not isinstance(submitted_items, list)
+            or not submitted_items
+        ):
+            return jsonify({
+                "error": "Add at least one product to the order"
+            }), 400
+
+        inventory = read_inventory()
+
+        inventory_by_id = {
+            safe_int(product.get("product_id"), -1): product
+            for product in inventory
+        }
+
+        quantities = {}
+
+        # Validate product IDs and quantities.
+        for item in submitted_items:
+            if not isinstance(item, dict):
+                return jsonify({
+                    "error": "Each order item must be an object"
+                }), 400
+
+            product_id = safe_int(
+                item.get("product_id"), -1
+            )
+            quantity = safe_int(
+                item.get("quantity"), 0
+            )
+
+            if product_id not in inventory_by_id:
+                return jsonify({
+                    "error": f"Product {product_id} was not found"
+                }), 400
+
+            if quantity <= 0:
+                return jsonify({
+                    "error": "Every order quantity must be positive"
+                }), 400
+
+            quantities[product_id] = (
+                quantities.get(product_id, 0) + quantity
+            )
+
+        # Use product prices from inventory, not client-submitted prices.
+        order_items = []
+        total_cost = 0.0
+
+        for product_id, quantity in quantities.items():
+            product = inventory_by_id[product_id]
+            unit_price = safe_float(
+                product.get("unit_price")
+            )
+            line_total = round(
+                quantity * unit_price, 2
+            )
+
+            order_items.append({
+                "product_id": product_id,
+                "product": product.get("product", ""),
+                "category": product.get("category", ""),
+                "quantity": quantity,
+                "unit_price": unit_price,
+                "line_total": line_total
+            })
+
+            total_cost += line_total
+
+        now = datetime.now().isoformat(
+            timespec="seconds"
+        )
+
+        order = {
+            "order_id": generate_transaction_id("PO"),
+            "created_at": now,
+            "updated_at": now,
+            "supplier_name": supplier_name,
+            "supplier_email": str(
+                data.get("supplier_email", "")
+            ).strip(),
+            "supplier_phone": str(
+                data.get("supplier_phone", "")
+            ).strip(),
+            "status": "Draft",
+            "items": order_items,
+            "total_cost": round(total_cost, 2),
+            "received_at": ""
+        }
+
+        orders = read_purchase_orders()
+        orders.append(order)
+        write_purchase_orders(orders)
+
+        return jsonify({
+            "message": "Purchase-order draft saved",
+            "purchase_order": order
+        }), 201
+
+    except Exception as error:
+        app.logger.exception(
+            "Purchase-order creation failed"
+        )
+        return jsonify({"error": str(error)}), 500
+
+
+# ---------------- UPDATE PURCHASE ORDER STATUS ----------------
+
+@app.route(
+    "/api/purchase-orders/<order_id>/status",
+    methods=["PUT"]
+)
+def update_purchase_order_status(order_id):
+    try:
+        data = request.get_json(silent=True) or {}
+        new_status = str(
+            data.get("status", "")
+        ).strip().title()
+
+        if new_status not in {
+            "Approved", "Received", "Cancelled"
+        }:
+            return jsonify({
+                "error": (
+                    "Status must be Approved, Received, "
+                    "or Cancelled"
+                )
+            }), 400
+
+        orders = read_purchase_orders()
+
+        order = next(
+            (
+                item for item in orders
+                if item.get("order_id") == order_id
+            ),
+            None
+        )
+
+        if order is None:
+            return jsonify({
+                "error": "Purchase order not found"
+            }), 404
+
+        current_status = order.get("status", "Draft")
+
+        allowed_transitions = {
+            "Draft": {"Approved", "Cancelled"},
+            "Approved": {"Received", "Cancelled"},
+            "Received": set(),
+            "Cancelled": set()
+        }
+
+        if new_status not in allowed_transitions.get(
+            current_status, set()
+        ):
+            return jsonify({
+                "error": (
+                    f"Cannot change purchase order from "
+                    f"{current_status} to {new_status}"
+                )
+            }), 409
+
+        now = datetime.now().isoformat(
+            timespec="seconds"
+        )
+
+        # Stock is changed only when an approved order is received.
+        if new_status == "Received":
+            inventory = read_inventory()
+
+            inventory_by_id = {
+                safe_int(product.get("product_id"), -1): product
+                for product in inventory
+            }
+
+            order_items = order.get("items", [])
+
+            # Validate every item before changing any stock.
+            for line in order_items:
+                product_id = safe_int(
+                    line.get("product_id"), -1
+                )
+                quantity = safe_int(
+                    line.get("quantity"), 0
+                )
+
+                if product_id not in inventory_by_id:
+                    return jsonify({
+                        "error": (
+                            f"Product {product_id} no longer exists. "
+                            "No stock was changed."
+                        )
+                    }), 409
+
+                if quantity <= 0:
+                    return jsonify({
+                        "error": "Invalid quantity in saved order"
+                    }), 409
+
+            received_lines = []
+
+            # Update stock in memory.
+            for line in order_items:
+                product_id = safe_int(line["product_id"])
+                quantity = safe_int(line["quantity"])
+                product = inventory_by_id[product_id]
+
+                old_stock = safe_int(
+                    product.get("current_stock")
+                )
+                new_stock = old_stock + quantity
+
+                reorder_level = safe_int(
+                    product.get("reorder_level")
+                )
+                unit_price = safe_float(
+                    product.get("unit_price")
+                )
+
+                product.update({
+                    "current_stock": str(new_stock),
+                    "inventory_value": str(
+                        round(new_stock * unit_price, 2)
+                    ),
+                    "status": calculate_inventory_status(
+                        new_stock, reorder_level
+                    )
+                })
+
+                received_lines.append((product, quantity))
+
+            # Persist inventory after all lines are validated.
+            write_inventory(inventory)
+
+            # Record each receipt using the existing transaction helper.
+            for product, quantity in received_lines:
+                add_inventory_transaction(
+                    product=product,
+                    action="purchase_order_received",
+                    quantity=quantity,
+                    quantity_change=quantity,
+                    reason=f"Received purchase order {order_id}"
+                )
+
+            order["received_at"] = now
+
+        order["status"] = new_status
+        order["updated_at"] = now
+
+        write_purchase_orders(orders)
+
+        return jsonify({
+            "message": f"Purchase order marked {new_status}",
+            "purchase_order": order
+        }), 200
+
+    except Exception as error:
+        app.logger.exception(
+            "Purchase-order status update failed"
+        )
+        return jsonify({"error": str(error)}), 500
+
+
+# =============================
+# SEND MAIL
+# =============================
+
+
+@app.route(
+    "/api/purchase-orders/<order_id>/send-inquiry",
+    methods=["POST"]
+)
+def send_purchase_order_inquiry(order_id):
+    if not resend.api_key or not RESEND_FROM_EMAIL:
+        return jsonify({
+            "error": "Resend is not configured. Check your environment variables."
+        }), 500
+
+    orders = read_purchase_orders()
+
+    order = next(
+        (
+            item for item in orders
+            if str(item.get("order_id")) == str(order_id)
+        ),
+        None
+    )
+
+    if order is None:
+        return jsonify({"error": "Purchase order not found."}), 404
+
+    if order.get("status") != "Draft":
+        return jsonify({
+            "error": "Only draft purchase orders can send a new inquiry."
+        }), 400
+
+    supplier_name = str(order.get("supplier_name", "")).strip()
+    supplier_email = str(order.get("supplier_email", "")).strip()
+    items = order.get("items", [])
+
+    if not supplier_name or not supplier_email:
+        return jsonify({
+            "error": "Supplier name and email are required."
+        }), 400
+
+    if not isinstance(items, list) or not items:
+        return jsonify({
+            "error": "This purchase order has no product items."
+        }), 400
+
+    product_lines = []
+
+    for item in items:
+        product_name = str(
+            item.get("product") or item.get("product_id") or ""
+        ).strip()
+
+        try:
+            quantity = int(item.get("quantity", 0))
+        except (ValueError, TypeError):
+            quantity = 0
+
+        if not product_name or quantity <= 0:
+            return jsonify({
+                "error": "A product has an invalid name or quantity."
+            }), 400
+
+        product_lines.append(f"- {product_name}: {quantity} units")
+
+    po_number = str(order.get("order_id", order_id))
+    product_list = "\n".join(product_lines)
+
+    email_text = f"""Dear {supplier_name},
+
+We are interested in purchasing the following products for our retail inventory.
+
+Purchase inquiry: {po_number}
+
+Requested products:
+{product_list}
+
+Please provide your quotation with the following details:
+
+1. Unit prices and bulk purchase discounts
+2. Current stock availability
+3. Applicable GST and other charges
+4. Shipping or delivery charges
+5. Expected delivery timeline
+6. Quotation validity and payment terms
+
+Please share your quotation so that we can review the prices and
+terms before confirming the purchase.
+
+This email is a request for quotation (RFQ), not a confirmed
+purchase commitment. We will confirm the purchase after reviewing
+and agreeing on the final quotation and terms.
+
+Thank you,
+Purchasing Department
+Intelligent Retail Analytics and Inventory Optimization System
+"""
+
+    try:
+        result = resend.Emails.send({
+            "from": RESEND_FROM_EMAIL,
+            "to": [supplier_email],
+            "subject": f"Request for Quotation (RFQ) - {po_number}",
+            "text": email_text,
+        })
+
+        # Mark approved only after Resend accepts the email request.
+        order["status"] = "Approved"
+        write_purchase_orders(orders)
+
+        app.logger.info(
+            "Supplier RFQ submitted for %s to %s",
+            po_number,
+            supplier_email
+        )
+
+        return jsonify({
+            "success": True,
+            "message": (
+                f"RFQ submitted for {po_number}. "
+                "The purchase order is now Approved."
+            )
+        }), 200
+
+    except Exception:
+        app.logger.exception(
+            "Supplier RFQ failed for purchase order %s", order_id
+        )
+        return jsonify({
+            "error": (
+                "The inquiry could not be completed. "
+                "Check the Flask logs and Resend dashboard."
+            )
+        }), 502
 
 
 # ============================================================
