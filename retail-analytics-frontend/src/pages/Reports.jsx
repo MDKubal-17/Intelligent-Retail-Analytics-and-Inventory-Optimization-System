@@ -4,16 +4,24 @@ import React, { useState, useEffect, useRef } from "react";
 // 1. CONFIGURATION & CONSTANTS
 // -----------------------------------------------------------------------------
 
+
 const CONFIG = {
-  API_ENDPOINTS: [
-    import.meta.env.VITE_REPORTS_API_URL,
-    "https://retail-backend-9qvb.onrender.com/api/reports/government-audit",
-    "http://localhost:5000/api/reports/government-audit"
-  ].filter(Boolean),
+  AUDIT_API_URL:
+    import.meta.env.VITE_REPORTS_API_URL ||
+    "http://localhost:5001/api/reports/government-audit",
+
+  SALES_API_URL:
+    import.meta.env.VITE_SALES_API_URL ||
+    "http://127.0.0.1:5000/api/sales",
+
+  PDF_ENDPOINT:
+    "http://localhost:5001/api/reports/sales-performance.pdf",
+
   DEFAULT_TAB: "sales",
   TIMEZONE: "IST (UTC+05:30)",
-  DATE_FORMAT_LOCALE: "en-GB"
+  DATE_FORMAT_LOCALE: "en-GB",
 };
+
 
 const UI_TEXT = {
   LOADING_TITLE: "Fetching Live Data...",
@@ -94,66 +102,103 @@ const STYLES = {
 function Reports() {
   const [activeTab, setActiveTab] = useState(CONFIG.DEFAULT_TAB);
   const [reportData, setReportData] = useState(null);
+  const [salesData, setSalesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloadTimestamp, setDownloadTimestamp] = useState(null);
   const reportRef = useRef(null);
 
-  useEffect(() => {
-    const fetchReportData = async () => {
-      setLoading(true);
-      setError(null);
-      let fetchedData = null;
+  const fetchReports = async () => {
+    setLoading(true);
+    setError(null);
 
-      for (const url of CONFIG.API_ENDPOINTS) {
-        try {
-          const response = await fetch(url);
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.data) {
-              fetchedData = result.data;
-              break;
-            }
-          }
-        } catch (err) {
-          console.warn(`Could not fetch report from ${url}`);
-        }
+    try {
+      const [salesResponse, auditResponse] = await Promise.all([
+        fetch(CONFIG.SALES_API_URL),
+        fetch(CONFIG.AUDIT_API_URL),
+      ]);
+
+      if (!salesResponse.ok) {
+        throw new Error(
+          `Sales API returned HTTP ${salesResponse.status}`
+        );
       }
 
-      if (fetchedData) {
-        setReportData(fetchedData);
-      } else {
-        setError(UI_TEXT.ERROR_NETWORK);
+      if (!auditResponse.ok) {
+        throw new Error(
+          `Audit API returned HTTP ${auditResponse.status}`
+        );
       }
+
+      const salesJson = await salesResponse.json();
+      const auditJson = await auditResponse.json();
+
+      const rows = Array.isArray(salesJson)
+        ? salesJson
+        : salesJson.data ??
+          salesJson.sales ??
+          salesJson.records ??
+          [];
+
+      if (!Array.isArray(rows)) {
+        throw new Error("The sales API did not return an array.");
+      }
+
+      if (!auditJson.success || !auditJson.data) {
+        throw new Error("Invalid government audit response.");
+      }
+
+      setSalesData(rows);
+      setReportData(auditJson.data);
+    } catch (err) {
+      console.error("Failed to load reports:", err);
+      setError(err.message || UI_TEXT.ERROR_NETWORK);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    fetchReportData();
+  useEffect(() => {
+    fetchReports();
   }, []);
 
+
+  
   const handleDownloadPDF = () => {
-    const now = new Date();
+    if (activeTab === "sales") {
+      window.open(
+        CONFIG.PDF_ENDPOINT,
+        "_blank",
+        "noopener,noreferrer"
+      );
+      return;
+    }
 
     setDownloadTimestamp({
-      date: now.toLocaleDateString(CONFIG.DATE_FORMAT_LOCALE, {
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-      }),
-      time: now.toLocaleTimeString(CONFIG.DATE_FORMAT_LOCALE, {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-      }),
-      tz: CONFIG.TIMEZONE
+      date: new Date().toLocaleDateString(
+        CONFIG.DATE_FORMAT_LOCALE,
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }
+      ),
+      time: new Date().toLocaleTimeString(
+        CONFIG.DATE_FORMAT_LOCALE,
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }
+      ),
+      tz: CONFIG.TIMEZONE,
     });
 
     requestAnimationFrame(() => {
-      setTimeout(() => {
-        window.print();
-      }, 300);
+      window.print();
     });
   };
+
 
   if (loading) {
     return (
@@ -169,7 +214,10 @@ function Reports() {
       <div style={STYLES.errorContainer}>
         <h2>{UI_TEXT.ERROR_TITLE}</h2>
         <p>{error || UI_TEXT.ERROR_DEFAULT}</p>
-        <button onClick={() => window.location.reload()} style={STYLES.btnPrimary}>
+        <button
+          onClick={fetchReports}
+          style={STYLES.btnPrimary}
+        >
           {UI_TEXT.RETRY_BTN}
         </button>
       </div>
@@ -273,19 +321,33 @@ function Reports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {reportData?.salesData?.length > 0 ? (
-                      reportData.salesData.map((row, index) => (
-                        <tr key={index}>
-                          <td style={STYLES.td("left")}>{row.period}</td>
-                          <td style={STYLES.td("center")}>{row.orders}</td>
-                          <td style={STYLES.td("right")}>{row.grossRevenue}</td>
-                          <td style={STYLES.td("right")}>{row.discounts}</td>
-                          <td style={STYLES.td("right", true)}>{row.netRevenue}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan={5} style={{ border: "1px solid #333333", padding: "6px", textAlign: "center", color: "#666666", fontStyle: "italic" }}>{UI_TEXT.NO_SALES_DATA}</td></tr>
-                    )}
+                    {salesData.length > 0
+                      ? salesData.map((row, index) => (
+                          <tr key={row.transaction_id ?? row.id ?? index}>
+                            <td style={STYLES.td("left")}>
+                              {row.date ?? row.Timestamp ?? row.timestamp ?? "N/A"}
+                            </td>
+                            <td style={STYLES.td("center")}>
+                              {row.transaction_id ?? row.id ?? "N/A"}
+                            </td>
+                            <td style={STYLES.td("right")}>
+                              ₹{Number(row.revenue ?? 0).toLocaleString("en-IN")}
+                            </td>
+                            <td style={STYLES.td("right")}>
+                              {row.discount_percent ?? 0}%
+                            </td>
+                            <td style={STYLES.td("right", true)}>
+                              ₹{Number(row.revenue ?? 0).toLocaleString("en-IN")}
+                            </td>
+                          </tr>
+                        ))
+                      : (
+                          <tr>
+                            <td colSpan={5} style={STYLES.td("center")}>
+                              {UI_TEXT.NO_SALES_DATA}
+                            </td>
+                          </tr>
+                        )}
                   </tbody>
                 </table>
               </div>
