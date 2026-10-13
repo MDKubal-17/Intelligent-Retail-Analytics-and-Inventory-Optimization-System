@@ -7,6 +7,8 @@ import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reports.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
 import transactionRoutes from "./routes/TransactionRoutes.js";
+import salesPerformanceReport from "./routes/salesPerformanceReport.js";
+
 
 dotenv.config();
 // Connect to MongoDB
@@ -20,6 +22,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/reports", salesPerformanceReport);
 // Existing inventory routes
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/inventory/transactions", transactionRoutes);
