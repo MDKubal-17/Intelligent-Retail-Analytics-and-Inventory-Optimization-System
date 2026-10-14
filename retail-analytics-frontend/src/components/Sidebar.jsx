@@ -17,336 +17,70 @@ import {
 function Sidebar() {
   const navigate = useNavigate();
 
-  return (
-    <div className="w-64 h-screen bg-slate-900 text-white fixed">
+  const linkClass = ({ isActive }) =>
+    `flex items-center gap-3 px-6 py-3 ${
+      isActive
+        ? "bg-blue-600 text-white"
+        : "hover:bg-slate-700"
+    }`;
 
-      {/* Logo */}
-      <div className="text-2xl font-bold p-6 border-b border-slate-700">
+  return (
+    <div className="fixed h-screen w-64 bg-slate-900 text-white">
+      <div className="border-b border-slate-700 p-6 text-2xl font-bold">
         Retail AI
       </div>
 
-      {/* Navigation */}
       <nav className="mt-6">
-
-        {/* Dashboard */}
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaTachometerAlt />
-          Dashboard
+        <NavLink to="/dashboard" className={linkClass}>
+          <FaTachometerAlt /> Dashboard
         </NavLink>
 
-        {/* Inventory */}
-        <NavLink
-          to="/inventory"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaBoxes />
-          Inventory
+        <NavLink to="/inventory" className={linkClass}>
+          <FaBoxes /> Inventory
         </NavLink>
 
-        {/* Products */}
-        <NavLink
-          to="/products"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaShoppingCart />
-          Products
+        <NavLink to="/products" className={linkClass}>
+          <FaShoppingCart /> Products
         </NavLink>
 
-        {/* Forecast */}
-        <NavLink
-          to="/forecast"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaChartLine />
-          Forecast
+        <NavLink to="/forecast" className={linkClass}>
+          <FaChartLine /> Forecast
         </NavLink>
 
-        {/* Sales */}
-        <NavLink
-          to="/sales"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaChartLine />
-          Sales
+        <NavLink to="/sales" className={linkClass}>
+          <FaChartLine /> Sales
         </NavLink>
 
-        {/* New Sale */}
-        <NavLink
-          to="/new-sale"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaCashRegister />
-          New Sale
+        <NavLink to="/new-sale" className={linkClass}>
+          <FaCashRegister /> New Sale
         </NavLink>
 
-        {/* Transactions */}
-        <NavLink
-          to="/transactions"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaExchangeAlt />
-          Transactions
+        <NavLink to="/transactions" className={linkClass}>
+          <FaExchangeAlt /> Transactions
         </NavLink>
 
-        <NavLink to="/purchase-orders" className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaSyncAlt />
-          Purchase Orders
+        <NavLink to="/purchase-orders" className={linkClass}>
+          <FaSyncAlt /> Purchase Orders
         </NavLink>
 
-        {/* Reports */}
-        <NavLink
-          to="/reports"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaFileAlt />
-          Reports
+        <NavLink to="/reports" className={linkClass}>
+          <FaFileAlt /> Reports
         </NavLink>
 
-        {/* Settings */}
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaCog />
-          Settings
+        <NavLink to="/settings" className={linkClass}>
+          <FaCog /> Settings
         </NavLink>
-
       </nav>
 
-      {/* Logout */}
       <div className="absolute bottom-5 w-full">
-
         <button
           onClick={() => navigate("/login", { replace: true })}
-          className="flex items-center gap-3 w-full px-6 py-3 text-red-400 hover:bg-slate-700"
+          className="flex w-full items-center gap-3 px-6 py-3 text-red-400 hover:bg-slate-700"
         >
           <FaSignOutAlt />
           <span>Logout</span>
         </button>
-
       </div>
-
-    </div>
-  );
-}
-
-export default Sidebar;
-  FaSignOutAlt,
-} from "react-icons/fa";
-
-function Sidebar() {
-  const navigate = useNavigate();
-
-  return (
-    <div className="w-64 h-screen bg-slate-900 text-white fixed">
-
-      {/* Logo */}
-      <div className="text-2xl font-bold p-6 border-b border-slate-700">
-        Retail AI
-      </div>
-
-      {/* Navigation */}
-      <nav className="mt-6">
-
-        {/* Dashboard */}
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaTachometerAlt />
-          Dashboard
-        </NavLink>
-
-        {/* Inventory */}
-        <NavLink
-          to="/inventory"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaBoxes />
-          Inventory
-        </NavLink>
-
-        {/* Products */}
-        <NavLink
-          to="/products"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaShoppingCart />
-          Products
-        </NavLink>
-
-        {/* Forecast */}
-        <NavLink
-          to="/forecast"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaChartLine />
-          Forecast
-        </NavLink>
-
-        {/* Sales */}
-        <NavLink
-          to="/sales"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaChartLine />
-          Sales
-        </NavLink>
-
-        {/* Transactions */}
-        <NavLink
-          to="/transactions"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaExchangeAlt />
-          Transactions
-        </NavLink>
-
-        {/* Reports */}
-        <NavLink
-          to="/reports"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaFileAlt />
-          Reports
-        </NavLink>
-
-        {/* Settings */}
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "hover:bg-slate-700"
-            }`
-          }
-        >
-          <FaCog />
-          Settings
-        </NavLink>
-
-      </nav>
-
-      {/* Logout */}
-      <div className="absolute bottom-5 w-full">
-
-        <button
-          onClick={() => navigate("/login", { replace: true })}
-          className="flex items-center gap-3 w-full px-6 py-3 text-red-400 hover:bg-slate-700"
-        >
-          <FaSignOutAlt />
-          <span>Logout</span>
-        </button>
-
-      </div>
-
     </div>
   );
 }
