@@ -1,4 +1,6 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const FLASK_API_URL =
   import.meta.env.VITE_FLASK_API_URL ||
@@ -282,57 +284,57 @@ function AIRecommendations() {
 
       )}
 
-
       {/* AI ANSWER */}
 
       {answer && (
-
         <div className="mt-6">
-
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
-
-            <div className="flex items-center gap-2 mb-3">
-
-              <span className="text-lg">
-                🤖
-              </span>
-
-              <span className="font-semibold">
-                AI Analysis
-              </span>
-
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-lg">🤖</span>
+              <span className="font-semibold">AI Analysis</span>
             </div>
 
-
-            <div className="text-gray-700 whitespace-pre-line leading-relaxed">
-
-              {answer}
-
+            <div
+              className="
+                text-gray-700 leading-relaxed
+                [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2
+                [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2
+                [&_h3]:text-base [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2
+                [&_p]:mb-3
+                [&_strong]:font-bold [&_strong]:text-gray-900
+                [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3
+                [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3
+                [&_li]:mb-1
+                [&_table]:w-full [&_table]:border-collapse [&_table]:my-4
+                [&_th]:bg-blue-100 [&_th]:font-semibold
+                [&_th]:text-left [&_th]:p-3 [&_th]:border [&_th]:border-gray-300
+                [&_td]:p-3 [&_td]:border [&_td]:border-gray-300
+                [&_td]:align-top
+                [&_tr:nth-child(even)]:bg-gray-100
+                [&_a]:text-blue-600 [&_a]:underline
+                [&_pre]:bg-gray-100 [&_pre]:rounded-lg [&_pre]:p-3
+                [&_code]:text-sm
+              "
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {answer}
+              </ReactMarkdown>
             </div>
-
           </div>
 
-
           <button
-
             onClick={() => {
-
               setAnswer("");
               setQuestion("");
-
+              setError("");
             }}
-
             className="mt-3 text-sm text-blue-600 hover:underline"
-
           >
-
             Ask another question →
-
           </button>
-
         </div>
-
       )}
+
 
     </div>
 
