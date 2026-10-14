@@ -1,13 +1,5 @@
-import { useNavigate, NavLink } from "react-router-dom";
 
-import {
-  FaTachometerAlt,
-  FaBoxes,
-  FaShoppingCart,
-  FaChartLine,
-  FaFileAlt,
-  FaExchangeAlt,
-  FaCog,import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 
 import {
   FaTachometerAlt,
