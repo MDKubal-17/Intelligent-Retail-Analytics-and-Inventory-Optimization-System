@@ -2,3 +2,10 @@ Flask
 flask-cors
 gunicorn
 joblib
+pandas
+python-dotenv
+google-genai
+requests
+resend
+mlxtend
+chronos-forecasting
