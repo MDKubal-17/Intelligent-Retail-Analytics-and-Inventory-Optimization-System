@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 
 export const Settings = () => {
@@ -6,7 +6,7 @@ export const Settings = () => {
   const storedUser =
     JSON.parse(localStorage.getItem("user")) || {
       id: "",
-      email: "",
+      email: "admin@retail.com",
     };
 
   const [email, setEmail] = useState(storedUser.email);
@@ -17,27 +17,100 @@ export const Settings = () => {
     confirm: "",
   });
 
+  const [theme, setTheme] = useState(
+    localStorage.getItem("theme") || "light"
+  );
+
   const [message, setMessage] = useState({
     type: "",
     text: "",
   });
 
-  const handleUpdate = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const handleUpdate = async (e) => {
     e.preventDefault();
 
-    // Show error if user attempts to fill out password fields
-    if (passwords.current || passwords.new || passwords.confirm) {
+    setMessage({
+      type: "",
+      text: "",
+    });
+
+    if (passwords.new && passwords.new !== passwords.confirm) {
       setMessage({
         type: "error",
-        text: "Password updates are currently disabled.",
+        text: "New passwords do not match!",
       });
       return;
     }
 
-    setMessage({
-      type: "success",
-      text: "Settings saved successfully!",
-    });
+    if (passwords.new && !passwords.current) {
+      setMessage({
+        type: "error",
+        text: "Current password is required to set a new password.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/auth/update-settings",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: storedUser.id,
+            email,
+            currentPassword: passwords.current,
+            newPassword: passwords.new,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({
+          type: "success",
+          text: data.message || "Settings updated successfully!",
+        });
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...storedUser,
+            email,
+          })
+        );
+
+        setPasswords({
+          current: "",
+          new: "",
+          confirm: "",
+        });
+      } else {
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to update settings.",
+        });
+      }
+    } catch (err) {
+      setMessage({
+        type: "error",
+        text: "Server unreachable. Check backend status.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -164,7 +237,8 @@ export const Settings = () => {
             </label>
 
             <select
-              defaultValue="light"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="light">
@@ -181,9 +255,10 @@ export const Settings = () => {
           {/* Save Button */}
           <button
             type="submit"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+            disabled={isSubmitting}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            Save Settings
+            {isSubmitting ? "Saving..." : "Save Settings"}
           </button>
 
         </form>
