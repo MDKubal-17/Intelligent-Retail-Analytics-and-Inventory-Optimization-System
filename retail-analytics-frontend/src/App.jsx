@@ -15,6 +15,7 @@ import Transactions from "./pages/Transactions";
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import NewSale from './pages/NewSale';
+import PurchaseOrders from "./pages/PurchaseOrders";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
