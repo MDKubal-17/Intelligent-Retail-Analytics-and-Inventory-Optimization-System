@@ -63,6 +63,7 @@ function AppContent() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/new-sale" element={<NewSale />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/purchase-orders" element={<PurchaseOrders />}/> 
         </Routes>
       </main>
     </div>
