@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 export const Settings = () => {
   // Read user from logged-in session
   const storedUser =
