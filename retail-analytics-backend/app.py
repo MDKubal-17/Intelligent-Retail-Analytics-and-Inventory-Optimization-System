@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 import csv
+import io
 import os
 import joblib
 import pandas as pd
@@ -34,6 +35,45 @@ else:
 
 app = Flask(__name__)
 
+# MongoDB storage is managed by the existing Node.js + Mongoose backend.
+NODE_API_URL = os.getenv("NODE_API_URL", "http://127.0.0.1:5001").rstrip("/")
+NODE_API_KEY = os.getenv("INTERNAL_API_KEY", "")
+
+
+def mongo_api(method, collection, payload=None):
+    """Communicate with the Node.js API that reads/writes MongoDB."""
+    headers = {"Content-Type": "application/json"}
+    if not NODE_API_KEY:
+        raise RuntimeError("INTERNAL_API_KEY is not configured in Flask environment.")
+
+    headers["x-internal-api-key"] = NODE_API_KEY
+    response = requests.request(
+        method,
+        f"{NODE_API_URL}/api/data/{collection}",
+        json=payload,
+        headers=headers,
+        timeout=30
+    )
+    response.raise_for_status()
+
+    if response.status_code == 204 or not response.content:
+        return None
+
+    return response.json()
+
+
+def csv_response(rows, fieldnames, filename):
+    """Return MongoDB records as CSV for existing CSV-download endpoints."""
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
 # CORS
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -51,19 +91,7 @@ RECOMMENDATION_API_URL = os.getenv(
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-
-CSV_FILE = os.path.join(DATA_DIR, "inventory_data.csv")
-SALES_FILE = os.path.join(DATA_DIR, "sales_data.csv")
-TRANSACTIONS_FILE = os.path.join(
-    DATA_DIR,
-    "inventory_transactions.csv"
-)
-
-FORECAST_DATA_FILE = os.path.join(
-    DATA_DIR,
-    "complete_daily_sales.csv"
-)
+# Persistent inventory, sales, transactions and forecast history are stored in MongoDB.
 
 
 # ============================================================
@@ -200,259 +228,85 @@ def generate_transaction_id(prefix="TXN"):
 
 
 # ============================================================
-# INVENTORY CSV HELPERS
+# MONGODB STORAGE HELPERS
 # ============================================================
 
 def read_inventory():
-
-    if not os.path.exists(CSV_FILE):
-        return []
-
+    rows = mongo_api("GET", "inventory") or []
     inventory = []
 
-    with open(
-        CSV_FILE,
-        "r",
-        encoding="utf-8",
-        newline=""
-    ) as file:
+    for row in rows:
+        if not row.get("product_id"):
+            continue
 
-        reader = csv.DictReader(file)
+        stock = safe_int(row.get("current_stock"))
+        reorder_level = safe_int(row.get("reorder_level"))
+        unit_price = safe_float(row.get("unit_price"))
 
-        for row in reader:
-
-            if not row.get("product_id"):
-                continue
-
-            stock = safe_int(
-                row.get("current_stock")
-            )
-
-            reorder_level = safe_int(
-                row.get("reorder_level")
-            )
-
-            unit_price = safe_float(
-                row.get("unit_price")
-            )
-
-            inventory_value = round(
-                stock * unit_price,
-                2
-            )
-
-            inventory.append({
-
-                "product_id": str(
-                    row.get("product_id")
-                ),
-
-                "product": row.get(
-                    "product",
-                    ""
-                ),
-
-                "category": row.get(
-                    "category",
-                    ""
-                ),
-
-                "current_stock": str(
-                    stock
-                ),
-
-                "reorder_level": str(
-                    reorder_level
-                ),
-
-                "unit_price": str(
-                    unit_price
-                ),
-
-                "inventory_value": str(
-                    inventory_value
-                ),
-
-                "status": calculate_inventory_status(
-                    stock,
-                    reorder_level
-                ),
-
-                "img_url": row.get(
-                    "img_url",
-                    ""
-                )
-            })
+        inventory.append({
+            "product_id": str(row.get("product_id")),
+            "product": row.get("product", ""),
+            "category": row.get("category", ""),
+            "current_stock": str(stock),
+            "reorder_level": str(reorder_level),
+            "unit_price": str(unit_price),
+            "inventory_value": str(round(stock * unit_price, 2)),
+            "status": calculate_inventory_status(stock, reorder_level),
+            "img_url": row.get("img_url", "")
+        })
 
     return inventory
 
 
 def write_inventory(inventory):
+    rows = []
 
-    os.makedirs(
-        DATA_DIR,
-        exist_ok=True
-    )
+    for row in inventory:
+        stock = safe_int(row.get("current_stock"))
+        reorder_level = safe_int(row.get("reorder_level"))
+        unit_price = safe_float(row.get("unit_price"))
 
-    with open(
-        CSV_FILE,
-        "w",
-        encoding="utf-8",
-        newline=""
-    ) as file:
+        rows.append({
+            "product_id": str(row.get("product_id", "")),
+            "product": row.get("product", ""),
+            "category": row.get("category", ""),
+            "current_stock": stock,
+            "reorder_level": reorder_level,
+            "unit_price": unit_price,
+            "inventory_value": round(stock * unit_price, 2),
+            "status": calculate_inventory_status(stock, reorder_level),
+            "img_url": row.get("img_url", "")
+        })
 
-        writer = csv.DictWriter(
-            file,
-            fieldnames=INVENTORY_FIELDS
-        )
+    mongo_api("PUT", "inventory", rows)
 
-        writer.writeheader()
-
-        for row in inventory:
-
-            clean_row = {
-
-                "product_id":
-                    row.get(
-                        "product_id",
-                        ""
-                    ),
-
-                "product":
-                    row.get(
-                        "product",
-                        ""
-                    ),
-
-                "category":
-                    row.get(
-                        "category",
-                        ""
-                    ),
-
-                "current_stock":
-                    row.get(
-                        "current_stock",
-                        0
-                    ),
-
-                "reorder_level":
-                    row.get(
-                        "reorder_level",
-                        0
-                    ),
-
-                "unit_price":
-                    row.get(
-                        "unit_price",
-                        0
-                    ),
-
-                "inventory_value":
-                    row.get(
-                        "inventory_value",
-                        0
-                    ),
-
-                "status":
-                    row.get(
-                        "status",
-                        ""
-                    ),
-
-                "img_url":
-                    row.get(
-                        "img_url",
-                        ""
-                    )
-            }
-
-            writer.writerow(clean_row)
-
-
-# ============================================================
-# SALES CSV HELPERS
-# ============================================================
 
 def read_sales():
-
-    if not os.path.exists(SALES_FILE):
-        return []
-
+    rows = mongo_api("GET", "sales") or []
     sales = []
 
-    with open(
-        SALES_FILE,
-        "r",
-        encoding="utf-8",
-        newline=""
-    ) as file:
+    for row in rows:
+        if not row.get("transaction_id"):
+            continue
 
-        reader = csv.DictReader(file)
+        quantity = safe_float(row.get("quantity"))
+        unit_price = safe_float(row.get("unit_price"))
+        discount = safe_float(row.get("discount_percent"))
 
-        for row in reader:
-
-            if not row.get("transaction_id"):
-                continue
-
-            quantity = safe_float(
-                row.get("quantity")
-            )
-
-            unit_price = safe_float(
-                row.get("unit_price")
-            )
-
-            discount = safe_float(
-                row.get("discount_percent")
-            )
-
-            calculated_revenue = (
-                quantity
-                * unit_price
-                * (1 - discount / 100)
-            )
-
-            sales.append({
-
-                "date": row.get(
-                    "date",
-                    ""
-                ),
-
-                "product_id": row.get(
-                    "product_id",
-                    ""
-                ),
-
-                "product": row.get(
-                    "product",
-                    ""
-                ),
-
-                "category": row.get(
-                    "category",
-                    ""
-                ),
-
-                "quantity": quantity,
-
-                "unit_price": unit_price,
-
-                "discount_percent": discount,
-
-                "revenue": round(
-                    calculated_revenue,
-                    2
-                ),
-
-                "transaction_id": row.get(
-                    "transaction_id",
-                    ""
-                )
-            })
+        sales.append({
+            "date": row.get("date", ""),
+            "product_id": str(row.get("product_id", "")),
+            "product": row.get("product", ""),
+            "category": row.get("category", ""),
+            "quantity": quantity,
+            "unit_price": unit_price,
+            "discount_percent": discount,
+            "revenue": round(quantity * unit_price * (1 - discount / 100), 2),
+            "transaction_id": row.get("transaction_id", "")
+        })
 
     return sales
+
 
 def append_sale(
     product,
@@ -461,30 +315,20 @@ def append_sale(
     discount_percent=0,
     transaction_id=None
 ):
-    os.makedirs(DATA_DIR, exist_ok=True)
-
-    # If this is a single-product sale, generate a new transaction ID.
-    # If this is a multi-product sale, use the shared transaction ID.
     if transaction_id is None:
         transaction_id = generate_transaction_id("TXN")
-
-    sale_date = datetime.now().strftime("%Y-%m-%d")
 
     quantity = safe_float(quantity)
     unit_price = safe_float(unit_price)
     discount_percent = safe_float(discount_percent)
 
-    gross_amount = quantity * unit_price
-    discount_amount = gross_amount * discount_percent / 100
-    revenue = gross_amount - discount_amount
+    revenue = quantity * unit_price * (1 - discount_percent / 100)
 
-    existing_sales = read_sales()
-
-    existing_sales.append({
-        "date": sale_date,
-        "product_id": product["product_id"],
-        "product": product["product"],
-        "category": product["category"],
+    mongo_api("POST", "sales", {
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "product_id": str(product["product_id"]),
+        "product": product.get("product", ""),
+        "category": product.get("category", ""),
         "quantity": quantity,
         "unit_price": unit_price,
         "discount_percent": discount_percent,
@@ -492,29 +336,8 @@ def append_sale(
         "transaction_id": transaction_id
     })
 
-    with open(SALES_FILE, "w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=SALES_FIELDS)
-        writer.writeheader()
-
-        for sale in existing_sales:
-            writer.writerow({
-                "date": sale.get("date", ""),
-                "product_id": sale.get("product_id", ""),
-                "product": sale.get("product", ""),
-                "category": sale.get("category", ""),
-                "quantity": sale.get("quantity", 0),
-                "unit_price": sale.get("unit_price", 0),
-                "discount_percent": sale.get("discount_percent", 0),
-                "revenue": sale.get("revenue", 0),
-                "transaction_id": sale.get("transaction_id", "")
-            })
-
     return transaction_id, revenue
 
-
-# ============================================================
-# INVENTORY TRANSACTION HELPER
-# ============================================================
 
 def add_inventory_transaction(
     product,
@@ -524,70 +347,19 @@ def add_inventory_transaction(
     reason="",
     transaction_id=None
 ):
+    # Each stock movement gets its own unique transaction ID.
+    transaction_id = generate_transaction_id("ITXN")
 
-    os.makedirs(
-        DATA_DIR,
-        exist_ok=True
-    )
-
-    transaction_id = generate_transaction_id(
-        "ITXN"
-    )
-
-    transaction_exists = (
-        os.path.exists(
-            TRANSACTIONS_FILE
-        )
-        and
-        os.path.getsize(
-            TRANSACTIONS_FILE
-        ) > 0
-    )
-
-    with open(
-        TRANSACTIONS_FILE,
-        "a",
-        encoding="utf-8",
-        newline=""
-    ) as file:
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=TRANSACTION_FIELDS
-        )
-
-        if not transaction_exists:
-
-            writer.writeheader()
-
-        writer.writerow({
-
-            "transaction_id":
-                transaction_id,
-
-            "date":
-                datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
-
-            "product_id":
-                product["product_id"],
-
-            "product":
-                product["product"],
-
-            "action":
-                action,
-
-            "quantity":
-                quantity,
-
-            "quantity_change":
-                quantity_change,
-
-            "reason":
-                reason
-        })
+    mongo_api("POST", "transactions", {
+        "transaction_id": transaction_id,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "product_id": str(product["product_id"]),
+        "product": product.get("product", ""),
+        "action": action,
+        "quantity": safe_int(quantity),
+        "quantity_change": safe_int(quantity_change),
+        "reason": reason
+    })
 
     return transaction_id
 
@@ -646,19 +418,10 @@ def home():
     methods=["GET"]
 )
 def serve_inventory_csv():
-
-    if not os.path.exists(CSV_FILE):
-
-        return jsonify({
-            "error":
-                "Inventory CSV not found"
-        }), 404
-
-    return send_from_directory(
-        DATA_DIR,
-        "inventory_data.csv",
-        mimetype="text/csv"
-    )
+    try:
+        return csv_response(read_inventory(), INVENTORY_FIELDS, "inventory_data.csv")
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
 
 
 # ============================================================
@@ -674,19 +437,10 @@ def serve_inventory_csv():
     methods=["GET"]
 )
 def serve_sales_csv():
-
-    if not os.path.exists(SALES_FILE):
-
-        return jsonify({
-            "error":
-                "Sales CSV not found"
-        }), 404
-
-    return send_from_directory(
-        DATA_DIR,
-        "sales_data.csv",
-        mimetype="text/csv"
-    )
+    try:
+        return csv_response(read_sales(), SALES_FIELDS, "sales_data.csv")
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
 
 
 # ============================================================
@@ -1215,112 +969,26 @@ def get_sales():
     methods=["GET"]
 )
 def get_transactions():
-
     try:
+        transactions = mongo_api("GET", "transactions") or []
 
-        if not os.path.exists(
-            TRANSACTIONS_FILE
-        ):
+        for row in transactions:
+            row["product_id"] = safe_int(row.get("product_id"))
+            row["quantity"] = safe_int(row.get("quantity"))
+            row["quantity_change"] = safe_int(row.get("quantity_change"))
 
-            return jsonify({
-
-                "count": 0,
-
-                "transactions": []
-
-            })
-
-        transactions = []
-
-        with open(
-            TRANSACTIONS_FILE,
-            "r",
-            encoding="utf-8",
-            newline=""
-        ) as file:
-
-            reader = csv.DictReader(
-                file
-            )
-
-            for row in reader:
-
-                if not row.get(
-                    "transaction_id"
-                ):
-
-                    continue
-
-                transactions.append({
-
-                    "transaction_id":
-                        row.get(
-                            "transaction_id",
-                            ""
-                        ),
-
-                    "date":
-                        row.get(
-                            "date",
-                            ""
-                        ),
-
-                    "product_id":
-                        safe_int(
-                            row.get(
-                                "product_id"
-                            )
-                        ),
-
-                    "product":
-                        row.get(
-                            "product",
-                            ""
-                        ),
-
-                    "action":
-                        row.get(
-                            "action",
-                            ""
-                        ),
-
-                    "quantity":
-                        safe_int(
-                            row.get(
-                                "quantity"
-                            )
-                        ),
-
-                    "quantity_change":
-                        safe_int(
-                            row.get(
-                                "quantity_change"
-                            )
-                        ),
-
-                    "reason":
-                        row.get(
-                            "reason",
-                            ""
-                        )
-                })
+        transactions.sort(
+            key=lambda row: row.get("date", ""),
+            reverse=True
+        )
 
         return jsonify({
-
-            "count":
-                len(transactions),
-
-            "transactions":
-                transactions
-
+            "count": len(transactions),
+            "transactions": transactions
         })
 
     except Exception as error:
-
-        return jsonify({
-            "error":
-                str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
 
 # ============================================================
@@ -2117,8 +1785,7 @@ def apriori_recommendations():
                     recommendations[product_id] = score
 
         # Match recommendations to actual products in the inventory
-        with open(CSV_FILE, "r", newline="", encoding="utf-8-sig") as file:
-            inventory = list(csv.DictReader(file))
+        inventory = read_inventory()
 
         inventory_by_id = {
             str(item.get("product_id", item.get("id", ""))).strip(): item
@@ -2652,25 +2319,30 @@ def forecast():
         # CHECK DATASET
         # ----------------------------------------------------
 
-        if not os.path.exists(
-            FORECAST_DATA_FILE
-        ):
+        forecast_records = mongo_api("GET", "forecast-history") or []
 
+        if not forecast_records:
             return jsonify({
-
-                "error":
-                    "complete_daily_sales.csv not found"
-
+                "error": "Forecast history is empty. Import complete_daily_sales.csv into MongoDB first."
             }), 404
 
         # ----------------------------------------------------
-        # LOAD DATA
+        # LOAD DATA FROM MONGODB
         # ----------------------------------------------------
 
-        df = pd.read_csv(
-            FORECAST_DATA_FILE
-        )
-        df["date"] = pd.to_datetime(df["date"])
+        df = pd.DataFrame(forecast_records)
+
+        if df.empty:
+            return jsonify({
+                "error": "Forecast dataset is empty"
+            }), 400
+
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        df["product_id"] = df["product_id"].astype(str)
+        df["quantity"] = pd.to_numeric(
+            df["quantity"], errors="coerce"
+        ).fillna(0)
+        df = df.dropna(subset=["date"])
 
         if df.empty:
 
@@ -2765,9 +2437,8 @@ def forecast():
         else:
 
             product_ids = (
-                df[
-                    "product_id"
-                ]
+                df["product_id"]
+                .astype(str)
                 .unique()
                 .tolist()
             )
@@ -2783,9 +2454,7 @@ def forecast():
         for item in inventory:
 
             inventory_lookup[
-                safe_int(
-                    item["product_id"]
-                )
+                safe_int(item["product_id"])
             ] = item
 
         # ----------------------------------------------------
@@ -2797,8 +2466,8 @@ def forecast():
         for product_id in product_ids:
 
             product_df = df[
-                df["product_id"]
-                == product_id
+                df["product_id"].astype(str)
+                == str(product_id)
             ].copy()
 
             if product_df.empty:
@@ -3503,12 +3172,13 @@ def forecast_history():
                 "error": "product_id is required"
             }), 400
 
-        if not os.path.exists(FORECAST_DATA_FILE):
+        forecast_records = mongo_api("GET", "forecast-history") or []
+        if not forecast_records:
             return jsonify({
                 "error": "Forecast dataset not found"
             }), 404
 
-        df = pd.read_csv(FORECAST_DATA_FILE)
+        df = pd.DataFrame(forecast_records)
 
         required_columns = [
             "date", "product_id", "quantity"
@@ -3591,129 +3261,26 @@ from flask import request, jsonify
 
 # ---------------- CONFIGURATION ----------------
 
-PURCHASE_ORDERS_FILE = os.path.join(
-    DATA_DIR, "purchase_orders.csv"
-)
-
-PO_FIELDS = [
-    "order_id",
-    "created_at",
-    "updated_at",
-    "supplier_name",
-    "supplier_email",
-    "supplier_phone",
-    "status",
-    "items_json",
-    "total_cost",
-    "received_at",
-]
-
-
-# ---------------- INITIALIZE CSV ----------------
+# ---------------- MONGODB PURCHASE ORDER HELPERS ----------------
 
 def initialize_purchase_orders():
-    os.makedirs(DATA_DIR, exist_ok=True)
+    # Retained for compatibility with existing purchase-order code.
+    return None
 
-    if not os.path.exists(PURCHASE_ORDERS_FILE):
-        with open(
-            PURCHASE_ORDERS_FILE,
-            "w",
-            newline="",
-            encoding="utf-8"
-        ) as file:
-            writer = csv.DictWriter(
-                file,
-                fieldnames=PO_FIELDS
-            )
-            writer.writeheader()
-
-
-# ---------------- READ PURCHASE ORDERS ----------------
 
 def read_purchase_orders():
-    initialize_purchase_orders()
-    orders = []
+    orders = mongo_api("GET", "purchase-orders") or []
 
-    with open(
-        PURCHASE_ORDERS_FILE,
-        "r",
-        newline="",
-        encoding="utf-8"
-    ) as file:
-        reader = csv.DictReader(file)
-
-        for row in reader:
-            try:
-                items = json.loads(
-                    row.get("items_json") or "[]"
-                )
-                if not isinstance(items, list):
-                    items = []
-            except (json.JSONDecodeError, TypeError):
-                items = []
-
-            row["items"] = items
-
-            try:
-                row["total_cost"] = float(
-                    row.get("total_cost") or 0
-                )
-            except (ValueError, TypeError):
-                row["total_cost"] = 0.0
-
-            orders.append(row)
+    for order in orders:
+        if not isinstance(order.get("items"), list):
+            order["items"] = []
+        order["total_cost"] = safe_float(order.get("total_cost"))
 
     return orders
 
 
-# ---------------- WRITE PURCHASE ORDERS ----------------
-
 def write_purchase_orders(orders):
-    initialize_purchase_orders()
-
-    temp_file = PURCHASE_ORDERS_FILE + ".tmp"
-
-    with open(
-        temp_file,
-        "w",
-        newline="",
-        encoding="utf-8"
-    ) as file:
-        writer = csv.DictWriter(
-            file,
-            fieldnames=PO_FIELDS
-        )
-        writer.writeheader()
-
-        for order in orders:
-            items = order.get(
-                "items",
-                order.get("items_json", [])
-            )
-
-            if isinstance(items, str):
-                try:
-                    items = json.loads(items)
-                except (json.JSONDecodeError, TypeError):
-                    items = []
-
-            if not isinstance(items, list):
-                items = []
-
-            writer.writerow({
-                "order_id": order.get("order_id", ""),
-                "created_at": order.get("created_at", ""),
-                "updated_at": order.get("updated_at", ""),
-                "supplier_name": order.get("supplier_name", ""),
-                "supplier_email": order.get("supplier_email", ""),
-                "supplier_phone": order.get("supplier_phone", ""),
-                "status": order.get("status", "Draft"),
-                "items_json": json.dumps(items),
-                "total_cost": order.get("total_cost", 0),
-                "received_at": order.get("received_at", ""),
-            })
-
-    os.replace(temp_file, PURCHASE_ORDERS_FILE)
+    mongo_api("PUT", "purchase-orders", orders)
 
 
 # ---------------- FORECAST-BASED RECOMMENDATIONS ----------------
