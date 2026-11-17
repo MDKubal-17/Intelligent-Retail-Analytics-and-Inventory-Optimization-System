@@ -6,7 +6,7 @@ import os
 import joblib
 import pandas as pd
 from datetime import datetime
-from chronos import Chronos2Pipeline
+#from chronos import Chronos2Pipeline
 from google import genai
 from dotenv import load_dotenv
 from google.genai import types
@@ -132,59 +132,96 @@ TRANSACTION_FIELDS = [
     "quantity_change",
     "reason"
 ]
-
-
 # ============================================================
-# LOAD ML MODEL
+# LAZY-LOADED ML MODELS
 # ============================================================
 
-try:
+_rf_model = None
+_le_product = None
+_le_category = None
+_chronos_pipeline = None
 
-    model = joblib.load(
-        os.path.join(BASE_DIR, "rf_model.pkl")
-    )
+def get_rf_model():
+    global _rf_model, _le_product, _le_category
+    if _rf_model is None:
+        try:
+            print("Loading Random Forest model...")
+            _rf_model = joblib.load(os.path.join(BASE_DIR, "rf_model.pkl"))
+            _le_product = joblib.load(os.path.join(BASE_DIR, "le_product.pkl"))
+            _le_category = joblib.load(os.path.join(BASE_DIR, "le_category.pkl"))
+            print("Random Forest model loaded successfully.")
+        except Exception as error:
+            print("WARNING: ML model could not be loaded:", error)
+    return _rf_model, _le_product, _le_category
 
-    le_product = joblib.load(
-        os.path.join(BASE_DIR, "le_product.pkl")
-    )
+def get_chronos_pipeline():
+    global _chronos_pipeline
+    if _chronos_pipeline is None:
+        try:
+            print("Loading Amazon Chronos-2 model...")
+            from chronos import Chronos2Pipeline
+            import torch
+            _chronos_pipeline = Chronos2Pipeline.from_pretrained(
+                "amazon/chronos-2",
+                device_map="cpu",
+                torch_dtype=torch.float32
+            )
+            print("Chronos-2 loaded successfully.")
+        except Exception as error:
+            print("WARNING: Chronos-2 could not be loaded:", error)
+    return _chronos_pipeline
 
-    le_category = joblib.load(
-        os.path.join(BASE_DIR, "le_category.pkl")
-    )
+# # ============================================================
+# # LOAD ML MODEL
+# # ============================================================
 
-    print("Random Forest model loaded successfully.")
+# try:
 
-except Exception as error:
+#     model = joblib.load(
+#         os.path.join(BASE_DIR, "rf_model.pkl")
+#     )
 
-    print("WARNING: ML model could not be loaded.")
-    print(error)
+#     le_product = joblib.load(
+#         os.path.join(BASE_DIR, "le_product.pkl")
+#     )
 
-    model = None
-    le_product = None
-    le_category = None
+#     le_category = joblib.load(
+#         os.path.join(BASE_DIR, "le_category.pkl")
+#     )
+
+#     print("Random Forest model loaded successfully.")
+
+# except Exception as error:
+
+#     print("WARNING: ML model could not be loaded.")
+#     print(error)
+
+#     model = None
+#     le_product = None
+#     le_category = None
 
 
 # ============================================================
 # LOAD CHRONOS-2
 # ============================================================
 
-try:
+# try:
 
-    print("Loading Amazon Chronos-2 model...")
+#     print("Loading Amazon Chronos-2 model...")
 
-    chronos_pipeline = Chronos2Pipeline.from_pretrained(
-        "amazon/chronos-2",
-        device_map="cpu"
-    )
+#     chronos_pipeline = Chronos2Pipeline.from_pretrained(
+#         "amazon/chronos-2",
+#         device_map="cpu"
+#     )
 
-    print("Chronos-2 loaded successfully.")
+#     print("Chronos-2 loaded successfully.")
 
-except Exception as error:
+# except Exception as error:
 
-    print("WARNING: Chronos-2 could not be loaded.")
-    print(error)
+#     print("WARNING: Chronos-2 could not be loaded.")
+#     print(error)
 
-    chronos_pipeline = None
+#     chronos_pipeline = None
 
 
 # ============================================================
@@ -2147,15 +2184,18 @@ def predict():
         }), 200
 
     try:
-
+        model, le_product, le_category = get_rf_model()
         if model is None:
+            return jsonify({"error": "Random Forest model is not loaded"}), 500
 
-            return jsonify({
+        # if model is None:
 
-                "error":
-                    "Random Forest model is not loaded"
+        #     return jsonify({
 
-            }), 500
+        #         "error":
+        #             "Random Forest model is not loaded"
+
+        #     }), 500
 
         data = (
             request.get_json(
@@ -2306,14 +2346,17 @@ def forecast():
         # CHECK CHRONOS
         # ----------------------------------------------------
 
+        chronos_pipeline = get_chronos_pipeline()
         if chronos_pipeline is None:
+            return jsonify({"error": "Chronos-2 model is not loaded"}), 500
+        # if chronos_pipeline is None:
 
-            return jsonify({
+        #     return jsonify({
 
-                "error":
-                    "Chronos-2 model is not loaded"
+        #         "error":
+        #             "Chronos-2 model is not loaded"
 
-            }), 500
+        #     }), 500
 
         # ----------------------------------------------------
         # CHECK DATASET
