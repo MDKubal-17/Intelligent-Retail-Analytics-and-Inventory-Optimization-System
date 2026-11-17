@@ -35,31 +35,74 @@ else:
 
 app = Flask(__name__)
 
-# MongoDB storage is managed by the existing Node.js + Mongoose backend.
-NODE_API_URL = os.getenv("NODE_API_URL", "http://127.0.0.1:5001").rstrip("/")
-NODE_API_KEY = os.getenv("INTERNAL_API_KEY", "")
+# ============================================================
+# NODE.JS MONGODB API CONFIGURATION
+# ============================================================
 
+NODE_API_URL = os.getenv("NODE_API_URL", "").strip().rstrip("/")
+NODE_API_KEY = os.getenv("INTERNAL_API_KEY", "").strip()
+
+if not NODE_API_URL:
+    raise RuntimeError("NODE_API_URL is not configured.")
+
+if not NODE_API_KEY:
+    raise RuntimeError("INTERNAL_API_KEY is not configured.")
+
+print("MongoDB API configured:", NODE_API_URL)
 
 def mongo_api(method, collection, payload=None):
-    """Communicate with the Node.js API that reads/writes MongoDB."""
-    headers = {"Content-Type": "application/json"}
-    if not NODE_API_KEY:
-        raise RuntimeError("INTERNAL_API_KEY is not configured in Flask environment.")
+    """
+    Communicate with the deployed Node.js API.
+    Node.js manages all MongoDB operations through Mongoose.
+    """
 
-    headers["x-internal-api-key"] = NODE_API_KEY
-    response = requests.request(
-        method,
-        f"{NODE_API_URL}/api/data/{collection}",
-        json=payload,
-        headers=headers,
-        timeout=30
-    )
-    response.raise_for_status()
+    if not NODE_API_URL:
+        raise RuntimeError("NODE_API_URL is missing.")
 
-    if response.status_code == 204 or not response.content:
-        return None
+    headers = {
+        "Content-Type": "application/json",
+        "x-internal-api-key": NODE_API_KEY
+    }
 
-    return response.json()
+    api_url = f"{NODE_API_URL}/api/data/{collection}"
+
+    try:
+        response = requests.request(
+            method=method,
+            url=api_url,
+            json=payload,
+            headers=headers,
+            timeout=60
+        )
+
+        if response.status_code == 204 or not response.content:
+            response.raise_for_status()
+            return None
+
+        response.raise_for_status()
+
+        return response.json()
+
+    except requests.exceptions.Timeout:
+        raise RuntimeError(
+            f"Node.js API timed out while accessing {collection}."
+        )
+
+    except requests.exceptions.ConnectionError:
+        raise RuntimeError(
+            f"Unable to connect to Node.js API: {NODE_API_URL}"
+        )
+
+    except requests.exceptions.HTTPError as error:
+        raise RuntimeError(
+            f"Node.js API error for {collection}: "
+            f"HTTP {response.status_code} - {response.text[:500]}"
+        )
+
+    except requests.exceptions.JSONDecodeError:
+        raise RuntimeError(
+            f"Node.js API returned invalid JSON for {collection}."
+        )
 
 
 def csv_response(rows, fieldnames, filename):
