@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import csv from 'csv-parser';
 import { format } from '@fast-csv/format';
-import Transaction from '../models/TransactionRoutes.js';
+import Transaction from 'server/models/Transaction.js';
 
 const router = express.Router();
 
