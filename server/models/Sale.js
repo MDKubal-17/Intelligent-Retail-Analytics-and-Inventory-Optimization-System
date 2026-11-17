@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const saleSchema = new mongoose.Schema({
@@ -10,6 +11,14 @@ const saleSchema = new mongoose.Schema({
   discount_percent: { type: Number, default: 0 },
   revenue: { type: Number, default: 0 },
   transaction_id: { type: String, required: true, index: true },
-}, { versionKey: false, strict: false, timestamps: true });
+
+  type: { type: String, default: "Sell" },
+  status: { type: String, default: "Completed" }
+
+}, {
+  versionKey: false,
+  strict: false,
+  timestamps: true
+});
 
 export default mongoose.model("Sale", saleSchema);
