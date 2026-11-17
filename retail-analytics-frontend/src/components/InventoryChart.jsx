@@ -15,12 +15,13 @@ function InventoryChart() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/dashboard")
+    const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
+
+    fetch(`${API_URL}/api/dashboard`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch dashboard data");
         }
-
         return response.json();
       })
       .then((result) => {
@@ -44,7 +45,6 @@ function InventoryChart() {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md">
-
       <h2 className="text-xl font-bold mb-4">
         Inventory by Category
       </h2>
@@ -64,20 +64,14 @@ function InventoryChart() {
       {!loading && !error && data.length > 0 && (
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
-
             <CartesianGrid strokeDasharray="3 3" />
-
             <XAxis dataKey="category" />
-
             <YAxis />
-
             <Tooltip />
-
             <Bar
               dataKey="stock"
               fill="#10B981"
             />
-
           </BarChart>
         </ResponsiveContainer>
       )}
@@ -87,7 +81,6 @@ function InventoryChart() {
           No inventory data available.
         </p>
       )}
-
     </div>
   );
 }
